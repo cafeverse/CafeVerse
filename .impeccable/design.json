@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-26T03:34:00Z",
+  "title": "Design System: CineVerse",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Warm Sand Platinum",
+        "canonical": "oklch(0.9247 0.0524 66.1732)",
+        "tonalRamp": [
+          "oklch(0.3 0.02 66)",
+          "oklch(0.4 0.03 66)",
+          "oklch(0.5 0.04 66)",
+          "oklch(0.6 0.045 66)",
+          "oklch(0.7 0.05 66)",
+          "oklch(0.8 0.052 66)",
+          "oklch(0.9 0.0524 66)",
+          "oklch(0.95 0.0524 66)"
+        ]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Obsidian Velvet",
+        "canonical": "oklch(0.1776 0 0)",
+        "tonalRamp": [
+          "oklch(0.1 0 0)",
+          "oklch(0.15 0 0)",
+          "oklch(0.2 0 0)",
+          "oklch(0.3 0 0)",
+          "oklch(0.4 0 0)",
+          "oklch(0.6 0 0)",
+          "oklch(0.8 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Sleek Charcoal",
+        "canonical": "oklch(0.2134 0 0)",
+        "tonalRamp": [
+          "oklch(0.12 0 0)",
+          "oklch(0.18 0 0)",
+          "oklch(0.22 0 0)",
+          "oklch(0.3 0 0)",
+          "oklch(0.4 0 0)",
+          "oklch(0.6 0 0)",
+          "oklch(0.8 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Giant content titles and cinematic displays."
+      },
+      "body": { "displayName": "Body", "purpose": "Primary readable movie descriptions." }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "instant",
+        "value": "none",
+        "purpose": "Immediate state changes with no transitions or animations."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "High importance main CTA buttons like Play or Download.",
+      "html": "<button class=\"ds-btn-primary\">DOWNLOAD</button>",
+      "css": ".ds-btn-primary { background: #ebd29f; color: #2e3335; padding: 10px 20px; font-weight: 700; border: none; border-radius: calc(var(--radius) - 2px); cursor: pointer; transition: none; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Obsidian Theater",
+    "overview": "CineVerse is a premium, high-performance desktop movie and TV show catalog workspace. Built on the core principle of 'The Obsidian Theater,' the design treats the UI as a subtle, darkened auditorium. UI panels, controls, and borders melt gracefully into the shadows, ensuring that vibrant media cover posters and movie backdrops stand as the sole glowing hero on the screen.",
+    "keyCharacteristics": [
+      "Obsidian Dimmed Canvas: Immersive, flat-dark surfaces with extremely subtle light offsets.",
+      "Warm Sand Accents: Soft, golden-amber primary highlights that represent a single, active color highlight.",
+      "Zero Motion Overhead: Instant, direct responses with absolute 0-animation overhead.",
+      "Content is Hero: High-contrast, elegant typography combined with borderless media."
+    ],
+    "rules": [
+      {
+        "name": "The Content-First Ratio",
+        "body": "Warm sand primary color must occupy <=10% of any given screen area. The absolute dark obsidian background must carry the remaining weight to preserve cinematic night legibility.",
+        "section": "colors"
+      },
+      {
+        "name": "The Flat Obsidian Doctrine",
+        "body": "Shadows are forbidden. Depth is achieved entirely through background contrast or border-tint overlays rather than blurred drop shadows.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do let the cinematic poster art carry the visual excitement of the page.",
+      "Do keep components flat and borderless, relying on tone-on-tone layouts.",
+      "Do respect the 0-animation standard, ensuring immediate state toggles with no layout shifts.",
+      "Do tint all dividers and borders with the warm sand hue to match the color strategy."
+    ],
+    "donts": [
+      "Don't use SaaS cliché card grids with identical card sizes and heavy borders.",
+      "Don't use bright neon or overly saturated colors for interactive borders or accents.",
+      "Don't introduce generic or flat, boring list tables.",
+      "Don't use standard box shadows to floatingly separate UI panels."
+    ]
+  }
+}
