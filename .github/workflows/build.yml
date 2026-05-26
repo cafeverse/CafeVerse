@@ -32,7 +32,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
 
       - name: Configure Git Bot
         run: |
@@ -142,7 +142,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - name: Checkout Tagged Code
@@ -153,7 +153,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: 'npm'
 
       - name: Install Dependencies
@@ -167,9 +167,6 @@ jobs:
           # Run OS-specific package.json scripts with passed configurations
           if [ "$RUNNER_OS" == "Windows" ]; then
             npm run build:win -- --x64 --arm64
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-            # Build macOS binaries (inherits identity: null from electron-builder.yml to bypass codesigning)
-            npm run build:mac -- --x64 --arm64 -c.mac.hardenedRuntime=false
           elif [ "$RUNNER_OS" == "Linux" ]; then
             # Explicitly compile AppImage and deb, skipping snap to avoid runner timeouts
             npm run build:linux -- AppImage deb --x64 --arm64
@@ -182,13 +179,10 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.tag }}
           files: |
             dist/*.exe
-            dist/*.dmg
             dist/*.zip
-            dist/*.pkg
             dist/*.AppImage
             dist/*.deb
             dist/*.snap
-            !dist/mac
             !dist/win-unpacked
             !dist/linux-unpacked
         env:
