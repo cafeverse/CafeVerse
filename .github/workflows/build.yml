@@ -161,18 +161,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_SIGN: false
         run: |
-          # Build renderer and main bundles first
-          npm run build
-
-          # Run OS-specific packaging with dynamic config overrides
+          # Run OS-specific package.json scripts with passed configurations
           if [ "$RUNNER_OS" == "Windows" ]; then
-            npx electron-builder --win --x64 --arm64
+            npm run build:win -- --x64 --arm64
           elif [ "$RUNNER_OS" == "macOS" ]; then
-            # Override mac.identity dynamically to bypass entitlement codesigning crashes on CI
-            npx electron-builder --mac --x64 --arm64 -c.mac.identity=null
+            # Override identity and hardenedRuntime dynamically via double-dash
+            npm run build:mac -- --x64 --arm64 -c '{"mac": {"identity": null, "hardenedRuntime": false}}'
           elif [ "$RUNNER_OS" == "Linux" ]; then
             # Explicitly compile AppImage and deb, skipping snap to avoid runner timeouts
-            npx electron-builder --linux AppImage deb --x64 --arm64
+            npm run build:linux -- AppImage deb --x64 --arm64
           fi
         shell: bash
 
