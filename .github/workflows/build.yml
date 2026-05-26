@@ -179,6 +179,7 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.tag }}
           files: |
             dist/*.exe
+            dist/*.msi
             dist/*.zip
             dist/*.AppImage
             dist/*.deb

@@ -9,14 +9,24 @@ files:
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!node_modules/@capacitor/android/**/*'
+  - '!node_modules/@capacitor/core/**/*'
+  - '!android/**/*'
 asarUnpack:
   - resources/**
 win:
   executableName: movies
+  target:
+    - target: nsis
+    - target: msi
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+msi:
+  artifactName: ${name}-${version}.${ext}
+  shortcutName: ${productName}
   createDesktopShortcut: always
 mac:
   identity: null
