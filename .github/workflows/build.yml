@@ -165,8 +165,8 @@ jobs:
           if [ "$RUNNER_OS" == "Windows" ]; then
             npm run build:win -- --x64 --arm64
           elif [ "$RUNNER_OS" == "macOS" ]; then
-            # Override identity and hardenedRuntime dynamically via double-dash
-            npm run build:mac -- --x64 --arm64 -c '{"mac": {"identity": null, "hardenedRuntime": false}}'
+            # Override identity and hardenedRuntime dynamically using simple flat flags to bypass NPM argument-parsing bugs
+            npm run build:mac -- --x64 --arm64 -c.mac.identity="" -c.mac.hardenedRuntime=false
           elif [ "$RUNNER_OS" == "Linux" ]; then
             # Explicitly compile AppImage and deb, skipping snap to avoid runner timeouts
             npm run build:linux -- AppImage deb --x64 --arm64
