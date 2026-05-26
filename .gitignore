@@ -5,7 +5,6 @@ out
 .eslintcache
 *.log*
 .env
-build
 .vscode
 .agents
 skills-lock.json
