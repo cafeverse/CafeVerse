@@ -30,6 +30,7 @@ jobs:
     outputs:
       version: ${{ steps.bump.outputs.version }}
       tag: ${{ steps.bump.outputs.tag }}
+      prerelease: ${{ steps.bump.outputs.prerelease }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -66,10 +67,23 @@ jobs:
 
             echo "version=$TAG" >> $GITHUB_OUTPUT
             echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+            if [[ "$VERSION" =~ ^0\. ]]; then
+              echo "prerelease=true" >> $GITHUB_OUTPUT
+            else
+              echo "prerelease=false" >> $GITHUB_OUTPUT
+            fi
           else
             NEW_VERSION=$(npm version $BUMP_TYPE -m "chore(release): bump version to %s [skip ci]")
             echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
             echo "tag=${NEW_VERSION}" >> $GITHUB_OUTPUT
+
+            PLAIN_VERSION="${NEW_VERSION#v}"
+            if [[ "$PLAIN_VERSION" =~ ^0\. ]]; then
+              echo "prerelease=true" >> $GITHUB_OUTPUT
+            else
+              echo "prerelease=false" >> $GITHUB_OUTPUT
+            fi
 
             git push origin HEAD:${{ github.ref_name }}
             git push origin ${NEW_VERSION}
@@ -157,7 +171,7 @@ jobs:
           name: CaféVerse ${{ steps.bump.outputs.version }}
           body_path: release_notes.md
           draft: true
-          prerelease: false
+          prerelease: ${{ steps.bump.outputs.prerelease }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -275,5 +289,6 @@ jobs:
         with:
           tag_name: ${{ needs.prepare.outputs.tag }}
           draft: false
+          prerelease: ${{ needs.prepare.outputs.prerelease }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
