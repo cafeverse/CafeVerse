@@ -124,7 +124,7 @@ jobs:
 
           const body = `
           <p align="center">
-            <img src="https://img.shields.io/badge/CINEVERSE-${version}-orange?style=for-the-badge" alt="CINEVERSE Release Badge" />
+            <img src="https://img.shields.io/badge/CaféVerse -${version}-orange?style=for-the-badge" alt="CaféVerse  Release Badge" />
           </p>
 
           ## 🚀 Release Notes - ${version}
@@ -150,7 +150,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.bump.outputs.tag }}
-          name: CINEVERSE ${{ steps.bump.outputs.version }}
+          name: CaféVerse ${{ steps.bump.outputs.version }}
           body_path: release_notes.md
           draft: true
           prerelease: false

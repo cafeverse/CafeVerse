@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-05-26T03:34:00Z",
-  "title": "Design System: CineVerse",
+  "title": "Design System: CaféVerse",
   "extensions": {
     "colorMeta": {
       "primary": {
@@ -83,7 +83,7 @@
   ],
   "narrative": {
     "northStar": "The Obsidian Theater",
-    "overview": "CineVerse is a premium, high-performance desktop movie and TV show catalog workspace. Built on the core principle of 'The Obsidian Theater,' the design treats the UI as a subtle, darkened auditorium. UI panels, controls, and borders melt gracefully into the shadows, ensuring that vibrant media cover posters and movie backdrops stand as the sole glowing hero on the screen.",
+    "overview": "CaféVerse is a premium, high-performance desktop movie and TV show catalog workspace. Built on the core principle of 'The Obsidian Theater,' the design treats the UI as a subtle, darkened auditorium. UI panels, controls, and borders melt gracefully into the shadows, ensuring that vibrant media cover posters and movie backdrops stand as the sole glowing hero on the screen.",
     "keyCharacteristics": [
       "Obsidian Dimmed Canvas: Immersive, flat-dark surfaces with extremely subtle light offsets.",
       "Warm Sand Accents: Soft, golden-amber primary highlights that represent a single, active color highlight.",
