@@ -9,7 +9,8 @@ import { AppContextType } from '../../layout'
 export default function MovieDetailPage(): React.JSX.Element {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
-  const { API_BASE_URL, getImageUrl, toggleWatchlist, getSlug } = useOutletContext<AppContextType>()
+  const { API_BASE_URL, getImageUrl, toggleWatchlist, isItemInWatchlist, getSlug } =
+    useOutletContext<AppContextType>()
 
   const [movie, setMovie] = useState<MediaItem | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
@@ -134,7 +135,7 @@ export default function MovieDetailPage(): React.JSX.Element {
   return (
     <div className="w-full pb-24">
       {/* 1. Cinematic Full-Bleed Hero Banner */}
-      <div className="relative w-full h-[65vh] min-h-125 mb-12">
+      <div className="relative w-full h-[35vh] sm:h-[50vh] md:h-[65vh] min-h-64 sm:min-h-96 md:min-h-125 mb-6 md:mb-12">
         <img
           src={getImageUrl(movie.backdropPath)}
           alt={movie.title}
@@ -145,17 +146,17 @@ export default function MovieDetailPage(): React.JSX.Element {
 
         <button
           onClick={() => navigate('/movies')}
-          className="absolute top-8 left-8 z-20 flex items-center gap-2 text-white/70 hover:text-white cursor-pointer font-bold tracking-widest text-sm uppercase transition-none"
+          className="absolute top-4 left-4 md:top-8 md:left-8 z-30 flex items-center gap-1.5 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 active:scale-95 px-3.5 py-2.5 rounded-xl border border-white/10 backdrop-blur-md cursor-pointer font-bold tracking-widest text-xs uppercase transition-all duration-300"
         >
-          <ChevronLeft className="size-5" /> Back
+          <ChevronLeft className="size-4" /> Back
         </button>
 
-        <div className="absolute bottom-0 left-0 w-full px-8 md:px-16 pb-12 z-20">
-          <div className="max-w-4xl space-y-4">
-            <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase leading-[0.9]">
+        <div className="absolute bottom-0 left-0 w-full px-4 sm:px-8 md:px-16 pb-6 md:pb-12 z-20">
+          <div className="max-w-4xl space-y-3 md:space-y-4">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-black text-white tracking-tighter uppercase leading-[1] md:leading-[0.9] break-words">
               {movie.title}
             </h1>
-            <div className="flex items-center gap-3 text-sm md:text-base font-bold text-white/70 uppercase tracking-widest">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs sm:text-sm md:text-base font-bold text-white/70 uppercase tracking-widest">
               <span>{movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : 'N/A'}</span>
               <span>&bull;</span>
               {movie.runtime && (
@@ -172,45 +173,75 @@ export default function MovieDetailPage(): React.JSX.Element {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 md:px-16 grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 md:px-16 grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 lg:gap-16 items-start">
         {/* Main Content Column */}
-        <div className="lg:col-span-8 space-y-16">
+        <div className="lg:col-span-8 space-y-8 md:space-y-12 lg:space-y-16">
           {/* Actions & Synopsis Row */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
-            <div className="md:col-span-4 space-y-4">
-              <div className="space-y-2">
-                <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+          <div className="flex flex-col md:flex-row gap-6 md:gap-10">
+            {/* Left actions panel */}
+            <div className="flex flex-row md:flex-col items-center md:items-start justify-between md:justify-start gap-4 bg-card/25 border border-border p-4 md:p-5 rounded-2xl md:w-56 shrink-0">
+              <div className="space-y-1">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                   IMDb Rating
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-black text-white">
+                  <span className="text-2xl md:text-3xl font-black text-white leading-none">
                     {movie.voteAverage?.toFixed(1) || 'N/A'}
                   </span>
                   <Star className="size-5 fill-primary text-primary" />
                 </div>
               </div>
+
+              <div className="flex flex-row md:flex-col gap-2.5">
+                <button
+                  onClick={() => {
+                    const playerEl = document.getElementById('cineverse-player')
+                    playerEl?.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                  className="flex items-center justify-center gap-2 bg-primary text-primary-foreground font-extrabold uppercase tracking-wider text-[10px] md:text-xs px-4 py-3 rounded-xl hover:bg-primary/95 active:scale-95 transition-all cursor-pointer min-h-11 shadow-lg shadow-primary/10 shrink-0"
+                >
+                  <Play className="size-3.5 fill-primary-foreground text-primary-foreground" />
+                  Play
+                </button>
+                <button
+                  onClick={() => toggleWatchlist(movie)}
+                  className={`flex items-center justify-center gap-2 font-extrabold uppercase tracking-wider text-[10px] md:text-xs px-4 py-3 rounded-xl border active:scale-95 transition-all cursor-pointer min-h-11 shrink-0 ${
+                    isItemInWatchlist(movie)
+                      ? 'bg-primary/10 border-primary/45 text-primary'
+                      : 'bg-muted/70 border-border text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <Star
+                    className={`size-3.5 ${isItemInWatchlist(movie) ? 'fill-primary text-primary' : 'text-muted-foreground'}`}
+                  />
+                  {isItemInWatchlist(movie) ? 'Watchlisted' : 'Watchlist'}
+                </button>
+              </div>
             </div>
 
-            <div className="md:col-span-8 space-y-6 text-left">
+            {/* Storyline text */}
+            <div className="flex-1 space-y-4 md:space-y-6 text-left">
               <h3 className="text-xl font-black uppercase tracking-widest text-foreground">
                 Storyline
               </h3>
-              <p className="text-lg text-foreground/80 leading-relaxed font-medium">
+              <p className="text-base sm:text-lg text-foreground/80 leading-relaxed font-medium">
                 {movie.overview || 'No description available.'}
               </p>
               {movie.tagline && (
-                <p className="text-base font-bold italic text-primary/80">{movie.tagline}</p>
+                <p className="text-sm sm:text-base font-bold italic text-primary/80">
+                  {movie.tagline}
+                </p>
               )}
             </div>
           </div>
 
           {/* Player Embed */}
-          <div className="space-y-6">
+          <div id="cineverse-player" className="space-y-6 scroll-mt-24">
             <h3 className="text-xl font-black uppercase tracking-widest text-foreground flex items-center gap-3">
               <Play className="size-5 text-primary fill-primary" />
               Now Playing
             </h3>
-            <div className="relative w-full bg-card aspect-video">
+            <div className="relative w-full bg-card aspect-video rounded-2xl overflow-hidden border border-border">
               <iframe
                 src={`https://vaplayer.ru/embed/movie/${movie.imdbId || movie.tmdbId}?color=ffe0c2&secondaryColor=393028&title=false`}
                 className="absolute inset-0 w-full h-full border-0"
@@ -225,17 +256,19 @@ export default function MovieDetailPage(): React.JSX.Element {
           {movie.cast && movie.cast.length > 0 && (
             <div className="space-y-6">
               <h3 className="text-xl font-black uppercase tracking-widest text-foreground">Cast</h3>
-              <div className="flex gap-8 overflow-x-auto pb-6 [&::-webkit-scrollbar]:hidden">
+              <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {movie.cast.map((c, i) => (
                   <div key={i} className="flex flex-col w-32 shrink-0 gap-3">
                     {c.profilePath ? (
-                      <img
-                        src={getImageUrl(c.profilePath)}
-                        alt={c.name}
-                        className="w-full aspect-2/3 object-cover grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-none"
-                      />
+                      <div className="w-full aspect-2/3 overflow-hidden rounded-xl bg-muted">
+                        <img
+                          src={getImageUrl(c.profilePath)}
+                          alt={c.name}
+                          className="h-full w-full object-cover grayscale opacity-80 md:hover:grayscale-0 md:hover:opacity-100 transition-all duration-300"
+                        />
+                      </div>
                     ) : (
-                      <div className="w-full aspect-2/3 bg-card flex items-center justify-center">
+                      <div className="w-full aspect-2/3 bg-card flex items-center justify-center rounded-xl border border-border">
                         <span className="text-xl font-black text-muted-foreground uppercase">
                           {c.name.charAt(0)}
                         </span>
@@ -260,23 +293,25 @@ export default function MovieDetailPage(): React.JSX.Element {
         <div className="lg:col-span-4 space-y-6">
           <h3 className="text-xl font-black uppercase tracking-widest text-foreground">Similar</h3>
           {similarMovies.length > 0 ? (
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-row lg:flex-col gap-4 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {similarMovies.map((sim) => (
                 <div
                   key={sim.id}
                   onClick={() => navigate(`/movies/${getSlug(sim.title)}`)}
-                  className="group flex gap-4 cursor-pointer"
+                  className="group flex flex-col lg:flex-row gap-3 lg:gap-4 shrink-0 w-36 lg:w-full bg-card/25 lg:bg-transparent border lg:border-0 border-border/60 p-2.5 lg:p-0 rounded-xl lg:rounded-none hover:bg-accent/40 lg:hover:bg-transparent cursor-pointer"
                 >
-                  <img
-                    src={getImageUrl(sim.posterPath)}
-                    alt={sim.title}
-                    className="w-24 aspect-2/3 object-cover"
-                  />
-                  <div className="flex flex-col justify-center gap-2">
-                    <span className="text-base font-bold text-white group-hover:text-primary transition-none leading-tight">
+                  <div className="w-full lg:w-24 aspect-2/3 overflow-hidden rounded-lg bg-muted shrink-0">
+                    <img
+                      src={getImageUrl(sim.posterPath)}
+                      alt={sim.title}
+                      className="h-full w-full object-cover transition-all duration-300 md:group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="flex flex-col justify-center gap-1.5 lg:gap-2">
+                    <span className="text-sm lg:text-base font-bold text-white md:group-hover:text-primary transition-colors leading-tight line-clamp-2">
                       {sim.title}
                     </span>
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                    <span className="text-[10px] lg:text-xs font-bold text-muted-foreground uppercase tracking-widest">
                       {sim.releaseDate ? new Date(sim.releaseDate).getFullYear() : ''}
                     </span>
                   </div>

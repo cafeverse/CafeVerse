@@ -13,7 +13,7 @@ export default function MoviesPage(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [selectedGenre, setSelectedGenre] = useState<string>('')
-  const [sortBy, setSortBy] = useState<string>('popularity')
+  const [sortBy, setSortBy] = useState<string>('created_at')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [itemsPerPage] = useState<number>(24)
@@ -96,9 +96,9 @@ export default function MoviesPage(): React.JSX.Element {
   ]
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 md:space-y-6 animate-fade-in">
       {/* FILTERS CONTROL PANEL */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/45 border border-border p-5 rounded-2xl backdrop-blur-md">
+      <div className="flex flex-col gap-4 bg-card/45 border border-border p-4 sm:p-5 rounded-2xl backdrop-blur-md lg:flex-row lg:items-center justify-between">
         {/* Search query input */}
         <div className="relative flex-1 max-w-md">
           <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -109,7 +109,7 @@ export default function MoviesPage(): React.JSX.Element {
             placeholder="Search movies..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-muted/70 border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/80 focus:ring-1 focus:ring-primary/45 transition-all duration-300"
+            className="w-full bg-muted/70 border border-border rounded-xl pl-10 pr-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/80 focus:ring-1 focus:ring-primary/45 transition-all duration-300"
           />
           {searchQuery && (
             <button
@@ -130,7 +130,7 @@ export default function MoviesPage(): React.JSX.Element {
                 setSortBy(e.target.value)
                 setCurrentPage(1)
               }}
-              className="bg-muted/70 border border-border rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/80 focus:ring-1 focus:ring-primary/45 cursor-pointer"
+              className="bg-muted/70 border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/80 focus:ring-1 focus:ring-primary/45 cursor-pointer min-h-11"
             >
               <option value="popularity">Popularity</option>
               <option value="vote_average">User Score</option>
@@ -147,7 +147,7 @@ export default function MoviesPage(): React.JSX.Element {
                 setSortOrder(e.target.value as 'asc' | 'desc')
                 setCurrentPage(1)
               }}
-              className="bg-muted/70 border border-border rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/80 focus:ring-1 focus:ring-primary/45 cursor-pointer"
+              className="bg-muted/70 border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/80 focus:ring-1 focus:ring-primary/45 cursor-pointer min-h-11"
             >
               <option value="desc">Descending</option>
               <option value="asc">Ascending</option>
@@ -160,7 +160,7 @@ export default function MoviesPage(): React.JSX.Element {
                 setSelectedGenre('')
                 setCurrentPage(1)
               }}
-              className="flex items-center gap-1 px-3 py-2 rounded-xl bg-primary/10 border border-primary/30 text-primary text-xs font-bold hover:bg-primary/25 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-3 rounded-xl bg-primary/10 border border-primary/30 text-primary text-sm font-bold hover:bg-primary/25 transition-colors cursor-pointer min-h-11"
             >
               Reset Genre Filter <X className="size-3" />
             </button>
@@ -169,14 +169,14 @@ export default function MoviesPage(): React.JSX.Element {
       </div>
 
       {/* Genre Pills Row */}
-      <div className="flex flex-wrap items-center gap-2 py-1">
-        <span className="text-xs font-bold text-muted-foreground mr-2">Genres:</span>
+      <div className="flex flex-row items-center overflow-x-auto pb-3 pt-1 gap-2 md:flex-wrap md:overflow-visible -mx-8 px-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <span className="text-xs font-bold text-muted-foreground mr-1 shrink-0">Genres:</span>
         <button
           onClick={() => {
             setSelectedGenre('')
             setCurrentPage(1)
           }}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 cursor-pointer ${
+          className={`px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 cursor-pointer shrink-0 ${
             !selectedGenre
               ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
               : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -191,7 +191,7 @@ export default function MoviesPage(): React.JSX.Element {
               setSelectedGenre(genre)
               setCurrentPage(1)
             }}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 cursor-pointer ${
+            className={`px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 cursor-pointer shrink-0 ${
               selectedGenre === genre
                 ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 border border-transparent'
                 : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -219,20 +219,20 @@ export default function MoviesPage(): React.JSX.Element {
       ) : mediaList.length > 0 ? (
         <div className="space-y-8">
           {/* Grid list of posters */}
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3.5 sm:gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {mediaList.map((item) => (
               <div
                 key={item.id}
                 onClick={() =>
                   navigate('/movies/' + (item.slug || getSlug(item.title || item.name)))
                 }
-                className="group flex flex-col gap-3 rounded-2xl bg-card/40 border border-border p-3 transition-all duration-300 hover:bg-accent/60 hover:-translate-y-1.5 hover:shadow-2xl cursor-pointer"
+                className="group flex flex-col gap-3 rounded-2xl bg-card/40 border border-border p-3 transition-all duration-300 hover:bg-accent/60 md:hover:-translate-y-1.5 md:hover:shadow-2xl cursor-pointer"
               >
                 <div className="relative aspect-2/3 overflow-hidden rounded-xl bg-muted">
                   <img
                     src={getImageUrl(item.posterPath)}
                     alt={item.title || item.name}
-                    className="h-full w-full object-cover transition-all duration-500 group-hover:scale-105"
+                    className="h-full w-full object-cover transition-all duration-500 md:group-hover:scale-105"
                   />
 
                   {/* Score Badge */}
@@ -248,8 +248,8 @@ export default function MoviesPage(): React.JSX.Element {
                     </div>
                   )}
 
-                  {/* Info Overlay Panel */}
-                  <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4">
+                  {/* Info Overlay Panel (Pointer only) */}
+                  <div className="absolute inset-0 bg-background/80 opacity-0 md:group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4 pointer-events-none">
                     <span className="text-[10px] text-primary uppercase tracking-widest font-extrabold mb-1">
                       {item.status}
                     </span>
@@ -261,7 +261,7 @@ export default function MoviesPage(): React.JSX.Element {
 
                 {/* Title descriptions */}
                 <div className="flex flex-col px-1">
-                  <h4 className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                  <h4 className="text-sm font-bold text-foreground line-clamp-1 md:group-hover:text-primary transition-colors">
                     {item.title || item.name}
                   </h4>
                   <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold mt-0.5">
