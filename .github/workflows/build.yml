@@ -103,7 +103,11 @@ jobs:
           let fixes = [];
 
           commits.forEach(msg => {
-            if (msg.includes("[skip ci]") || msg.startsWith("chore(release):")) return;
+            if (
+              msg.includes("[skip ci]") ||
+              msg.startsWith("chore(release):") ||
+              /^(merge branch|merge pull request)/i.test(msg)
+            ) return;
             
             const cleanMsg = msg.replace(/^(feat|new|fix|chore|refactor|style|perf|docs|test)(\(.*?\))?:\s*/i, "");
             
