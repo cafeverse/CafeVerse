@@ -1,5 +1,5 @@
 ---
-name: CineVerse
+name: CaféVerse
 description: A premium, fast, and cinematic desktop movie library.
 colors:
   primary: '#ebd29f'
@@ -59,13 +59,13 @@ components:
     padding: '24px'
 ---
 
-# Design System: CineVerse
+# Design System: CaféVerse
 
 ## 1. Overview
 
 \*\*Creative North Star: "The Obsidian Theater"\*\*
 
-CineVerse is a premium, high-performance desktop movie and TV show catalog workspace. Built on the core principle of "The Obsidian Theater," the design treats the UI as a subtle, darkened auditorium. UI panels, controls, and borders melt gracefully into the shadows, ensuring that vibrant media cover posters and movie backdrops stand as the sole glowing hero on the screen.
+CaféVerse is a premium, high-performance desktop movie and TV show catalog workspace. Built on the core principle of "The Obsidian Theater," the design treats the UI as a subtle, darkened auditorium. UI panels, controls, and borders melt gracefully into the shadows, ensuring that vibrant media cover posters and movie backdrops stand as the sole glowing hero on the screen.
 
 The layout emphasizes content-first minimalism. Rather than trapping information in rigid card grids, the workspace leverages natural vertical flows, generous spacing rhythm, and borderless canvas integration.
 
@@ -78,7 +78,7 @@ The layout emphasizes content-first minimalism. Rather than trapping information
 
 ## 2. Colors
 
-CineVerse operates on a committed color strategy where a primary, warm sand accent is used selectively against deep, dark neutrals. Bright neon borders and flat SaaS colors are strictly forbidden.
+CaféVerse operates on a committed color strategy where a primary, warm sand accent is used selectively against deep, dark neutrals. Bright neon borders and flat SaaS colors are strictly forbidden.
 
 ### Primary
 
@@ -111,7 +111,7 @@ CineVerse operates on a committed color strategy where a primary, warm sand acce
 
 ## 4. Elevation
 
-CineVerse is a flat-by-default, flat-obsidian system. Rather than floating cards with soft drop shadows, the app achieves clean, quiet structure using background tonal changes.
+CaféVerse is a flat-by-default, flat-obsidian system. Rather than floating cards with soft drop shadows, the app achieves clean, quiet structure using background tonal changes.
 
 ### Named Rules
 

@@ -19,7 +19,7 @@ export interface AppContextType {
 export default function RootLayout(): React.JSX.Element {
   // Watchlist State (Persisted locally in localStorage)
   const [watchlist, setWatchlist] = useState<MediaItem[]>(() => {
-    const saved = localStorage.getItem('cineverse_watchlist')
+    const saved = localStorage.getItem('cafeverse_watchlist')
     return saved ? JSON.parse(saved) : []
   })
 
@@ -43,7 +43,7 @@ export default function RootLayout(): React.JSX.Element {
 
   // Sync Watchlist with localStorage
   useEffect(() => {
-    localStorage.setItem('cineverse_watchlist', JSON.stringify(watchlist))
+    localStorage.setItem('cafeverse_watchlist', JSON.stringify(watchlist))
   }, [watchlist])
 
   // Watchlist Actions

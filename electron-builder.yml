@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: movies
+productName: CaféVerse
 directories:
   buildResources: build
 files:
@@ -15,7 +15,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: movies
+  executableName: cafeverse
   icon: build/icon.ico
   target:
     - target: nsis

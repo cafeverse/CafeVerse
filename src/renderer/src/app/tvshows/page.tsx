@@ -205,7 +205,7 @@ export default function TvShowsPage(): React.JSX.Element {
         <div className="flex flex-col items-center justify-center py-28 gap-4">
           <Loader2 className="size-8 text-primary animate-spin" />
           <span className="text-sm text-muted-foreground font-medium">
-            Querying Cineverse database...
+            Querying CaféVerse database...
           </span>
         </div>
       ) : error ? (

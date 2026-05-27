@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Layers, Film, Tv, Bookmark, Menu } from 'lucide-react'
+import { Layers, Film, Tv, Bookmark, Menu, Coffee } from 'lucide-react'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 
@@ -21,10 +21,10 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ watchlistCount, setOpen
     {/* Sidebar Header Brand Logo */}
     <div className="flex h-20 items-center justify-center border-b border-border px-6 gap-3 shrink-0 relative z-10">
       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/30">
-        <Layers className="size-5 text-white" />
+        <Coffee className="size-5 text-white" />
       </div>
       <div className="flex flex-col">
-        <h2 className="m-0 text-lg font-bold tracking-wider text-primary">CINEVERSE</h2>
+        <h2 className="m-0 text-lg font-bold tracking-wider text-primary">CaféVerse</h2>
       </div>
     </div>
 

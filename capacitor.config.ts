@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.cineverse.app',
-  appName: 'Cineverse',
+  appId: 'com.cafeverse.app',
+  appName: 'CaféVerse',
   webDir: 'out/renderer'
 }
 

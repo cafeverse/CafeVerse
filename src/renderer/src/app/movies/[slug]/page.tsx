@@ -67,7 +67,7 @@ export default function MovieDetailPage(): React.JSX.Element {
               return
             }
           }
-          throw new Error('Movie not found in the Cineverse database.')
+          throw new Error('Movie not found in the CaféVerse database.')
         }
 
         const others = movies.filter((m) => m.id !== matchedMovie.id)
@@ -195,7 +195,7 @@ export default function MovieDetailPage(): React.JSX.Element {
               <div className="flex flex-row md:flex-col gap-2.5">
                 <button
                   onClick={() => {
-                    const playerEl = document.getElementById('cineverse-player')
+                    const playerEl = document.getElementById('cafeverse-player')
                     playerEl?.scrollIntoView({ behavior: 'smooth' })
                   }}
                   className="flex items-center justify-center gap-2 bg-primary text-primary-foreground font-extrabold uppercase tracking-wider text-[10px] md:text-xs px-4 py-3 rounded-xl hover:bg-primary/95 active:scale-95 transition-all cursor-pointer min-h-11 shadow-lg shadow-primary/10 shrink-0"
@@ -236,7 +236,7 @@ export default function MovieDetailPage(): React.JSX.Element {
           </div>
 
           {/* Player Embed */}
-          <div id="cineverse-player" className="space-y-6 scroll-mt-24">
+          <div id="cafeverse-player" className="space-y-6 scroll-mt-24">
             <h3 className="text-xl font-black uppercase tracking-widest text-foreground flex items-center gap-3">
               <Play className="size-5 text-primary fill-primary" />
               Now Playing
