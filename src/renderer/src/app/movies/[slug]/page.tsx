@@ -153,7 +153,7 @@ export default function MovieDetailPage(): React.JSX.Element {
 
         <div className="absolute bottom-0 left-0 w-full px-4 sm:px-8 md:px-16 pb-6 md:pb-12 z-20">
           <div className="max-w-4xl space-y-3 md:space-y-4">
-            <h1 className="text-3xl sm:text-5xl md:text-7xl font-black text-white tracking-tighter uppercase leading-[1] md:leading-[0.9] break-words">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-black text-white tracking-tighter uppercase leading-none md:leading-[0.9] wrap-break-word">
               {movie.title}
             </h1>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs sm:text-sm md:text-base font-bold text-white/70 uppercase tracking-widest">
@@ -256,7 +256,7 @@ export default function MovieDetailPage(): React.JSX.Element {
           {movie.cast && movie.cast.length > 0 && (
             <div className="space-y-6">
               <h3 className="text-xl font-black uppercase tracking-widest text-foreground">Cast</h3>
-              <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none]">
                 {movie.cast.map((c, i) => (
                   <div key={i} className="flex flex-col w-32 shrink-0 gap-3">
                     {c.profilePath ? (
@@ -293,7 +293,7 @@ export default function MovieDetailPage(): React.JSX.Element {
         <div className="lg:col-span-4 space-y-6">
           <h3 className="text-xl font-black uppercase tracking-widest text-foreground">Similar</h3>
           {similarMovies.length > 0 ? (
-            <div className="flex flex-row lg:flex-col gap-4 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex flex-row lg:flex-col gap-4 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
               {similarMovies.map((sim) => (
                 <div
                   key={sim.id}
