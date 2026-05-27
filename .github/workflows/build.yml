@@ -1,24 +1,32 @@
 name: Build and Auto-Release App
 
 on:
-  push:
-    branches:
-      - main
-      - master
   workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Select version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - none
 
 permissions:
   contents: write
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # Job 1: Auto-increment version, commit/tag it, and create a draft release
   prepare:
     name: Prepare Release
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    timeout-minutes: 10
     outputs:
       version: ${{ steps.bump.outputs.version }}
       tag: ${{ steps.bump.outputs.tag }}
@@ -32,43 +40,57 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
 
       - name: Configure Git Bot
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Increment Version & Push Tag
+      - name: Handle Version & Tag
         id: bump
         run: |
-          # Increment patch version (e.g. 1.0.0 -> 1.0.1) in package.json and commit it
-          NEW_VERSION=$(npm version patch -m "chore(release): bump version to %s [skip ci]")
-          echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
-          echo "tag=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          BUMP_TYPE="${{ inputs.bump_type }}"
+          if [ "$BUMP_TYPE" = "none" ]; then
+            VERSION=$(node -p "require('./package.json').version")
+            TAG="v$VERSION"
 
-          # Push the commit and the newly created tag back to GitHub
-          git push origin HEAD:${{ github.ref_name }}
-          git push origin ${NEW_VERSION}
+            if git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
+              echo "::error::Tag $TAG already exists. Exiting."
+              exit 1
+            fi
+
+            git tag "$TAG"
+            git push origin "$TAG"
+
+            echo "version=$TAG" >> $GITHUB_OUTPUT
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+          else
+            NEW_VERSION=$(npm version $BUMP_TYPE -m "chore(release): bump version to %s [skip ci]")
+            echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+            echo "tag=${NEW_VERSION}" >> $GITHUB_OUTPUT
+
+            git push origin HEAD:${{ github.ref_name }}
+            git push origin ${NEW_VERSION}
+          fi
+        shell: bash
 
       - name: Generate Dynamic Release Notes & Camo Badge
         run: |
+          set -euo pipefail
           node -e '
           const fs = require("fs");
           const execSync = require("child_process").execSync;
 
           let lastTag = "";
           try {
-            // Find the tag before the newly pushed tag
-            const tags = execSync("git tag --sort=-v:refname").toString().trim().split("\n").filter(Boolean);
-            if (tags.length > 1) {
-              lastTag = tags[1]; // Index 0 is the one we just pushed, index 1 is the previous one
-            }
+            lastTag = execSync("git describe --tags --abbrev=0 HEAD^").toString().trim();
           } catch (e) {
-            console.log("No previous tags found");
+            console.log("No previous tags found, using full history.");
           }
 
-          const logCmd = lastTag ? `git log ${lastTag}..HEAD~1 --pretty=format:"%s"` : "git log --pretty=format:\"%s\"";
+          const logCmd = lastTag ? `git log ${lastTag}..HEAD --pretty=format:"%s"` : "git log --pretty=format:\"%s\"";
           let commits = [];
           try {
             commits = execSync(logCmd).toString().trim().split("\n").filter(Boolean);
@@ -135,14 +157,32 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Job 2: Build the app binaries on Windows, Mac, and Linux for x64 and arm64
+  # Job 2: Build the app binaries
   build:
-    name: Build (${{ matrix.os }})
+    name: Build (${{ matrix.platform }} ${{ matrix.arch }})
     needs: prepare
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - platform: windows
+            os: windows-latest
+            arch: x64
+            build_cmd: npm run build:win -- --x64
+          - platform: windows
+            os: windows-latest
+            arch: arm64
+            build_cmd: npm run build:win -- --arm64
+          - platform: linux
+            os: ubuntu-latest
+            arch: x64
+            build_cmd: npm run build:linux -- AppImage deb --x64
+          - platform: linux
+            os: ubuntu-latest
+            arch: arm64
+            build_cmd: npm run build:linux -- AppImage deb --arm64
 
     steps:
       - name: Checkout Tagged Code
@@ -153,8 +193,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
           cache: 'npm'
+
+      - name: Cache Electron
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/electron
+            ~/.cache/electron-builder
+            ~/AppData/Local/electron/Cache
+            ~/AppData/Local/electron-builder/cache
+          key: ${{ runner.os }}-${{ matrix.arch }}-electron-${{ hashFiles('package-lock.json') }}
 
       - name: Install Dependencies
         run: npm install
@@ -164,14 +214,34 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_SIGN: false
         run: |
-          # Run OS-specific package.json scripts with passed configurations
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            npm run build:win -- --x64 --arm64
-          elif [ "$RUNNER_OS" == "Linux" ]; then
-            # Explicitly compile AppImage and deb, skipping snap to avoid runner timeouts
-            npm run build:linux -- AppImage deb --x64 --arm64
-          fi
+          set -euo pipefail
+          ${{ matrix.build_cmd }}
         shell: bash
+
+      - name: Verify Build Output
+        run: |
+          set -euo pipefail
+          echo "Build artifacts in dist/:"
+          ls -lh dist/ 2>/dev/null || echo "dist/ directory not found"
+          FILE_COUNT=$(find dist -maxdepth 1 -type f \( -name "*.exe" -o -name "*.msi" -o -name "*.zip" -o -name "*.AppImage" -o -name "*.deb" \) 2>/dev/null | wc -l)
+          if [ "$FILE_COUNT" -eq 0 ]; then
+            echo "::error::No distributable files found in dist/"
+            exit 1
+          fi
+          echo "Found $FILE_COUNT distributable file(s)"
+        shell: bash
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            dist/*.exe
+            dist/*.msi
+            dist/*.zip
+            dist/*.AppImage
+            dist/*.deb
+          retention-days: 5
 
       - name: Upload Binaries to Draft Release
         uses: softprops/action-gh-release@v2
@@ -183,9 +253,9 @@ jobs:
             dist/*.zip
             dist/*.AppImage
             dist/*.deb
-            dist/*.snap
             !dist/win-unpacked
             !dist/linux-unpacked
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -194,6 +264,7 @@ jobs:
     name: Publish Release
     needs: [prepare, build]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Publish Draft Release
         uses: softprops/action-gh-release@v2
