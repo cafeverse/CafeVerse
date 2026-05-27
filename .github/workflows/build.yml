@@ -179,10 +179,6 @@ jobs:
             os: windows-latest
             arch: x64
             build_cmd: npm run build:win -- --x64
-          - platform: windows
-            os: windows-latest
-            arch: arm64
-            build_cmd: npm run build:win -- --arm64
           - platform: linux
             os: ubuntu-latest
             arch: x64
