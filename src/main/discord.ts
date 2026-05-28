@@ -15,13 +15,6 @@ export function initDiscordRPC(): void {
   rpc.on('ready', () => {
     console.log('[Discord RPC] Connected to Discord client successfully!')
     isConnected = true
-
-    // Set initial idle/welcome status
-    updateDiscordActivity({
-      details: 'Browsing CaféVerse',
-      state: 'Viewing Dashboard',
-      startTimestamp: Date.now()
-    })
   })
 
   rpc.on('disconnected', () => {
