@@ -170,7 +170,7 @@ jobs:
     name: Build (${{ matrix.platform }} ${{ matrix.arch }})
     needs: prepare
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -183,10 +183,6 @@ jobs:
             os: ubuntu-latest
             arch: x64
             build_cmd: npm run build:linux -- AppImage deb --x64
-          - platform: linux
-            os: ubuntu-latest
-            arch: arm64
-            build_cmd: npm run build:linux -- AppImage deb --arm64
 
     steps:
       - name: Checkout Tagged Code
@@ -198,7 +194,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - name: Cache Electron
         uses: actions/cache@v4
@@ -208,10 +208,10 @@ jobs:
             ~/.cache/electron-builder
             ~/AppData/Local/electron/Cache
             ~/AppData/Local/electron-builder/cache
-          key: ${{ runner.os }}-${{ matrix.arch }}-electron-${{ hashFiles('package-lock.json') }}
+          key: ${{ runner.os }}-${{ matrix.arch }}-electron-${{ hashFiles('bun.lock') }}
 
-      - name: Install Dependencies
-        run: npm install
+      - name: Install Dependencies with Bun
+        run: bun install --frozen-lockfile
 
       - name: Build Electron App
         env:
