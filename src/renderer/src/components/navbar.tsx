@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Layers, Film, Tv, Bookmark, Menu, Coffee } from 'lucide-react'
+import { Layers, Film, Tv, Bookmark, Menu, Coffee, RefreshCw } from 'lucide-react'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 
 interface NavbarProps {
   watchlistCount: number
+  updateAvailable?: boolean
 }
 
 interface SidebarContentProps {
@@ -195,7 +196,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ watchlistCount, setOpen
   </div>
 )
 
-export const Navbar: React.FC<NavbarProps> = ({ watchlistCount }) => {
+export const Navbar: React.FC<NavbarProps> = ({ watchlistCount, updateAvailable }) => {
   const [open, setOpen] = useState(false)
 
   return (
@@ -217,33 +218,54 @@ export const Navbar: React.FC<NavbarProps> = ({ watchlistCount }) => {
         </div>
       </NavLink>
 
-      {/* 2. Desktop Navigation Menu (Center-aligned) */}
-      <nav className="hidden md:flex items-center gap-1.5 h-full">
-        <DesktopNavItem to="/" icon={Layers} label="Dashboard" end />
-        <DesktopNavItem to="/movies" icon={Film} label="Movies" />
-        <DesktopNavItem to="/tvshows" icon={Tv} label="TV Shows" />
-        <DesktopNavItem to="/watchlist" icon={Bookmark} label="Watchlist" count={watchlistCount} />
-      </nav>
+      {/* 2. Navigation & Actions (Right-aligned) */}
+      <div className="flex items-center gap-6 h-full">
+        {/* Desktop Navigation Menu */}
+        <nav className="hidden md:flex items-center gap-1.5 h-full">
+          <DesktopNavItem to="/" icon={Layers} label="Dashboard" end />
+          <DesktopNavItem to="/movies" icon={Film} label="Movies" />
+          <DesktopNavItem to="/tvshows" icon={Tv} label="TV Shows" />
+          <DesktopNavItem
+            to="/watchlist"
+            icon={Bookmark}
+            label="Watchlist"
+            count={watchlistCount}
+          />
+        </nav>
 
-      <div className="md:hidden flex items-center">
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="bg-transparent border-white/10 text-foreground hover:bg-white/[0.02] cursor-pointer rounded-xl size-9.5 shrink-0 transition-colors"
+        {/* Actions / Utility container */}
+        <div className="flex items-center gap-3">
+          {updateAvailable && (
+            <NavLink
+              to="/update"
+              className="flex items-center justify-center size-9.5 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/95 hover:scale-105 active:scale-95 transition-all duration-300 animate-pulse cursor-pointer shrink-0 shadow-lg shadow-destructive/30 group"
+              title="System Update Available"
             >
-              <Menu className="size-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            side="left"
-            className="flex w-72 flex-col justify-start border-r border-border/40 bg-transparent p-0"
-          >
-            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-            <SidebarContent watchlistCount={watchlistCount} setOpen={setOpen} />
-          </SheetContent>
-        </Sheet>
+              <RefreshCw className="size-4.5 group-hover:rotate-180 transition-transform duration-500" />
+            </NavLink>
+          )}
+
+          <div className="md:hidden flex items-center">
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="bg-transparent border-white/10 text-foreground hover:bg-white/[0.02] cursor-pointer rounded-xl size-9.5 shrink-0 transition-colors"
+                >
+                  <Menu className="size-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="left"
+                className="flex w-72 flex-col justify-start border-r border-border/40 bg-transparent p-0"
+              >
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                <SidebarContent watchlistCount={watchlistCount} setOpen={setOpen} />
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
       </div>
 
       <div className="hidden md:block absolute bottom-0 left-0 right-0 h-[1px] bg-linear-to-r from-transparent via-primary/10 to-transparent pointer-events-none" />

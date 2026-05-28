@@ -144,7 +144,7 @@ function registerUpdater(window: BrowserWindow): void {
   })
 
   autoUpdater.on('update-available', (info) => {
-    console.log('[Updater] Update available:', info)
+    console.log('[Updater] Update available')
     window.webContents.send('updater-available', info)
   })
 
