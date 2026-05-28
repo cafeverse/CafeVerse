@@ -244,9 +244,10 @@ export default function MovieDetailPage(): React.JSX.Element {
             <div className="relative w-full bg-card aspect-video rounded-2xl overflow-hidden border border-border">
               <iframe
                 src={`https://vaplayer.ru/embed/movie/${movie.imdbId || movie.tmdbId}?color=ffe0c2&secondaryColor=393028&title=false`}
-                className="absolute inset-0 w-full h-full border-0"
+                className="absolute border-0 top-[-1%] left-[-1%] w-[102%] h-[102%]"
                 allowFullScreen
-                allow="autoplay; fullscreen; picture-in-picture"
+                allow="fullscreen; picture-in-picture"
+                sandbox="allow-scripts allow-same-origin"
                 title={`Watch ${movie.title}`}
               />
             </div>

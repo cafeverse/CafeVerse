@@ -1,8 +1,10 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, session } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { registerMoviesIpc } from './moviesApi'
+import { ElectronBlocker } from '@ghostery/adblocker-electron'
+import fetch from 'cross-fetch'
 
 function createWindow(): void {
   // Create the browser window.
@@ -23,14 +25,26 @@ function createWindow(): void {
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    console.log(`[Security] Blocked window open request to: ${details.url}`)
     return { action: 'deny' }
+  })
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (
+      !url.startsWith('http://localhost:') &&
+      !url.startsWith('file://') &&
+      !url.startsWith('https://localhost:')
+    ) {
+      console.log(`[Security] Blocked top-level navigation to: ${url}`)
+      event.preventDefault()
+    }
   })
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    // mainWindow.webContents.openDevTools({ mode: 'detach' })
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
@@ -56,6 +70,15 @@ app.whenReady().then(async () => {
 
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
+
+  // Block ad and tracking networks
+  try {
+    const blocker = await ElectronBlocker.fromPrebuiltAdsAndTracking(fetch)
+    blocker.enableBlockingInSession(session.defaultSession)
+    console.log('adblocker enabled')
+  } catch (error) {
+    console.error('Failed to initialize adblocker:', error)
+  }
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
