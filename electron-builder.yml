@@ -20,7 +20,6 @@ win:
   target:
     - target: nsis
     - target: msi
-  signExecutable: false
 nsis:
   artifactName: ${productName}-${version}-windows${arch}.${ext}
   shortcutName: ${productName}

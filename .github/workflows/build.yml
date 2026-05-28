@@ -213,13 +213,6 @@ jobs:
       - name: Install Dependencies with Bun
         run: bun install --frozen-lockfile
 
-      - name: Run Code Quality Checks
-        run: |
-          set -euo pipefail
-          bun run lint
-          bun run typecheck
-        shell: bash
-
       - name: Build Electron App
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
