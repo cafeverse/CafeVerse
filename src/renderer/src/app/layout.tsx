@@ -4,7 +4,7 @@ import Navbar from '@/components/navbar'
 import { MediaItem } from '@/types'
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/original'
-const API_BASE_URL = 'http://localhost:8080'
+const API_BASE_URL = 'https://api.movies.voidart.us'
 
 export interface AppContextType {
   watchlist: MediaItem[]
