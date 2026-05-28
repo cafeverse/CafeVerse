@@ -17,6 +17,18 @@ declare global {
         maximize: () => void
         close: () => void
       }
+      discord: {
+        updateActivity: (activity: {
+          details?: string
+          state?: string
+          startTimestamp?: number
+          largeImageKey?: string
+          largeImageText?: string
+          smallImageKey?: string
+          smallImageText?: string
+        }) => void
+        clearActivity: () => void
+      }
       getAppVersion: () => Promise<string>
       autoUpdater: {
         checkForUpdates: () => void

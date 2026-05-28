@@ -16,6 +16,18 @@ const api = {
     maximize: () => ipcRenderer.send('window-maximize'),
     close: () => ipcRenderer.send('window-close')
   },
+  discord: {
+    updateActivity: (activity: {
+      details?: string
+      state?: string
+      startTimestamp?: number
+      largeImageKey?: string
+      largeImageText?: string
+      smallImageKey?: string
+      smallImageText?: string
+    }) => ipcRenderer.send('discord-update-activity', activity),
+    clearActivity: () => ipcRenderer.send('discord-clear-activity')
+  },
   getAppVersion: (): Promise<string> => ipcRenderer.invoke('get-app-version'),
   autoUpdater: {
     checkForUpdates: (): void => ipcRenderer.send('updater-check'),

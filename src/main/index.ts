@@ -6,6 +6,12 @@ import { registerMoviesIpc } from './moviesApi'
 import { ElectronBlocker } from '@ghostery/adblocker-electron'
 import fetch from 'cross-fetch'
 import { autoUpdater } from 'electron-updater'
+import {
+  initDiscordRPC,
+  updateDiscordActivity,
+  clearDiscordActivity,
+  shutdownDiscordRPC
+} from './discord'
 
 let mainWindow: BrowserWindow
 
@@ -98,6 +104,18 @@ app.whenReady().then(async () => {
 
   // Register Movies IPC
   registerMoviesIpc()
+
+  // Register Discord RPC IPC
+  ipcMain.on('discord-update-activity', (_event, activity) => {
+    updateDiscordActivity(activity)
+  })
+
+  ipcMain.on('discord-clear-activity', () => {
+    clearDiscordActivity()
+  })
+
+  // Initialize Discord Rich Presence
+  initDiscordRPC()
 
   // Register Window Controls IPC
   ipcMain.on('window-minimize', () => {
@@ -204,6 +222,7 @@ function registerUpdater(window: BrowserWindow): void {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
+  shutdownDiscordRPC()
   if (process.platform !== 'darwin') {
     app.quit()
   }

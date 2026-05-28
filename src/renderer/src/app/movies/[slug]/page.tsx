@@ -83,6 +83,27 @@ export default function MovieDetailPage(): React.JSX.Element {
     fetchMovie()
   }, [slug, API_BASE_URL, getSlug])
 
+  // Update Discord activity when movie details are loaded (representing active watching)
+  useEffect(() => {
+    if (movie) {
+      const year = movie.releaseDate ? ` (${new Date(movie.releaseDate).getFullYear()})` : ''
+      window.api?.discord?.updateActivity({
+        details: `Watching ${movie.title}${year}`,
+        state: movie.tagline || 'Enjoying a movie',
+        startTimestamp: Date.now(),
+        largeImageKey: getImageUrl(movie.posterPath),
+        largeImageText: `${movie.title} • IMDb ${movie.voteAverage?.toFixed(1) || 'N/A'}`,
+        smallImageKey: 'play',
+        smallImageText: 'Streaming now'
+      })
+    }
+
+    return (): void => {
+      // Clear activity when unmounting or navigating away
+      window.api?.discord?.clearActivity()
+    }
+  }, [movie, getImageUrl])
+
   if (loading) {
     return (
       <div className="space-y-8 w-full pb-16">
