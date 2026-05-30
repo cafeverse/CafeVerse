@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Minus, Square, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Minus, Square, X, ChevronLeft, ChevronRight, RotateCw } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 const Titlebar: React.FC = () => {
@@ -13,8 +13,19 @@ const Titlebar: React.FC = () => {
     navigate(1)
   }
 
+  const handleRefresh = (hard: boolean = false): void => {
+    if (hard) {
+      // Bypassing cache if supported/triggered
+
+      window.location.reload()
+    } else {
+      window.location.reload()
+    }
+  }
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
+      // Navigation shortcuts
       if (e.altKey) {
         if (e.key === 'ArrowLeft') {
           e.preventDefault()
@@ -23,6 +34,12 @@ const Titlebar: React.FC = () => {
           e.preventDefault()
           navigate(1)
         }
+      }
+
+      // Refresh shortcuts
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r') {
+        e.preventDefault()
+        handleRefresh(e.shiftKey)
       }
     }
 
@@ -50,6 +67,13 @@ const Titlebar: React.FC = () => {
           title="Go Forward (Alt + Right Arrow)"
         >
           <ChevronRight className="size-4" />
+        </button>
+        <button
+          onClick={(e) => handleRefresh(e.shiftKey)}
+          className="size-6 rounded-md flex items-center justify-center text-muted-foreground/50 hover:bg-white/5 hover:text-foreground cursor-pointer transition-colors duration-150 ml-1"
+          title="Refresh (Ctrl + R)"
+        >
+          <RotateCw className="size-3.5" />
         </button>
       </div>
 
