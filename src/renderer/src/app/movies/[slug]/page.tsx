@@ -99,7 +99,6 @@ export default function MovieDetailPage(): React.JSX.Element {
     }
 
     return (): void => {
-      // Clear activity when unmounting or navigating away
       window.api?.discord?.clearActivity()
     }
   }, [movie, getImageUrl])
@@ -248,7 +247,7 @@ export default function MovieDetailPage(): React.JSX.Element {
             <Play className="size-5 text-primary fill-primary" />
             Now Playing
           </h3>
-          <div className="relative w-full h-[500px] bg-card aspect-video rounded-2xl overflow-hidden border border-border">
+          <div className="relative w-full h-125 bg-card aspect-video rounded-2xl overflow-hidden border border-border">
             <iframe
               src={`https://vaplayer.ru/embed/movie/${movie.imdbId || movie.tmdbId}?color=ffe0c2&secondaryColor=393028&title=false`}
               className="absolute border-0 top-[-1%] left-[-1%] w-[102%] h-[102%]"

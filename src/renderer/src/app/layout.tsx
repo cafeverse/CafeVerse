@@ -3,27 +3,10 @@ import { Outlet } from 'react-router-dom'
 import Navbar from '@/components/navbar'
 import Titlebar from '@/components/titlebar'
 import { MediaItem } from '@/types'
+import { cleanReleaseNotes } from '@/lib/utils'
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/original'
 const API_BASE_URL = 'https://api.movies.voidart.us'
-
-const cleanReleaseNotes = (rawNotes?: string): string => {
-  if (!rawNotes) return ''
-
-  let cleaned = rawNotes
-
-  // 1. Remove the center-aligned badge paragraph (e.g., <p align="center">...</p>)
-  cleaned = cleaned.replace(/<p\s+align="center">[\s\S]*?<\/p>/gi, '')
-
-  // 2. Remove redundant <h2> or <h1> release note titles (e.g. <h2>🚀 Release Notes...</h2>)
-  cleaned = cleaned.replace(/<h2[^>]*>[\s\S]*?<\/h2>/gi, '')
-
-  // 3. Remove HR dividers and automated build footers
-  cleaned = cleaned.replace(/<hr\s*\/?>/gi, '')
-  cleaned = cleaned.replace(/<p>\s*<em>[\s\S]*?<\/em>\s*<\/p>/gi, '')
-
-  return cleaned.trim()
-}
 
 export interface AppContextType {
   watchlist: MediaItem[]
@@ -43,10 +26,15 @@ export interface AppContextType {
 }
 
 export default function RootLayout(): React.JSX.Element {
-  // Watchlist State (Persisted locally in localStorage)
+  // Watchlist State (Persisted locally in localStorage with error protection)
   const [watchlist, setWatchlist] = useState<MediaItem[]>(() => {
-    const saved = localStorage.getItem('cafeverse_watchlist')
-    return saved ? JSON.parse(saved) : []
+    try {
+      const saved = localStorage.getItem('cafeverse_watchlist')
+      return saved ? JSON.parse(saved) : []
+    } catch (e) {
+      console.error('Failed to parse watchlist from localStorage:', e)
+      return []
+    }
   })
 
   // Auto Updater State
@@ -77,13 +65,19 @@ export default function RootLayout(): React.JSX.Element {
       .trim()
   }, [])
 
-  // Sync Watchlist with localStorage
+  // Sync Watchlist with localStorage with error boundary protection
   useEffect(() => {
-    localStorage.setItem('cafeverse_watchlist', JSON.stringify(watchlist))
+    try {
+      localStorage.setItem('cafeverse_watchlist', JSON.stringify(watchlist))
+    } catch (e) {
+      console.error('Failed to save watchlist to localStorage:', e)
+    }
   }, [watchlist])
 
-  // Bind Auto Updater IPC Events
+  // Bind Auto Updater IPC Events with robust lifecycle and error timeout cleanup
   useEffect(() => {
+    let errorTimeoutId: NodeJS.Timeout | null = null
+
     if (window.api?.getAppVersion) {
       window.api.getAppVersion().then((ver) => setCurrentVersion(ver))
     }
@@ -108,7 +102,8 @@ export default function RootLayout(): React.JSX.Element {
     const unsubscribeError = window.api.autoUpdater.onError((err) => {
       setUpdaterError(typeof err === 'string' ? err : 'Update failed')
       setDownloading(false)
-      setTimeout(() => setUpdaterError(null), 5000)
+      if (errorTimeoutId) clearTimeout(errorTimeoutId)
+      errorTimeoutId = setTimeout(() => setUpdaterError(null), 5000)
     })
 
     return () => {
@@ -116,6 +111,9 @@ export default function RootLayout(): React.JSX.Element {
       unsubscribeProgress()
       unsubscribeDownloaded()
       unsubscribeError()
+      if (errorTimeoutId) {
+        clearTimeout(errorTimeoutId)
+      }
     }
   }, [])
 
@@ -139,8 +137,7 @@ export default function RootLayout(): React.JSX.Element {
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-background font-sans text-foreground antialiased selection:bg-primary selection:text-primary-foreground">
       <Titlebar />
       <Navbar watchlistCount={watchlist.length} updateAvailable={!!updateInfo} />
-      <main className="flex-1 flex flex-col h-full overflow-y-auto bg-background relative">
-        <div className="absolute top-0 right-1/4 h-75 w-125 rounded-full bg-primary/5 blur-[120px]" />
+      <main className="flex-1 flex flex-col min-h-0 bg-background relative">
         <div className="flex-1 overflow-y-auto">
           <Outlet
             context={{

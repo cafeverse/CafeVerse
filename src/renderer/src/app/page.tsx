@@ -1,8 +1,19 @@
-import React, { useState, useEffect } from 'react'
-import { Flame, Star, Calendar, Heart, TrendingUp, ChevronRight, Play, Film } from 'lucide-react'
+import React, { useState, useEffect, useCallback } from 'react'
+import {
+  Flame,
+  Star,
+  Calendar,
+  Heart,
+  TrendingUp,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Film
+} from 'lucide-react'
 import { MediaItem } from '@/types'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { AppContextType } from './layout'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function DashboardPage(): React.JSX.Element {
   const navigate = useNavigate()
@@ -10,59 +21,160 @@ export default function DashboardPage(): React.JSX.Element {
     useOutletContext<AppContextType>()
 
   // API Data States
-  const [featuredItem, setFeaturedItem] = useState<MediaItem | null>(null)
+  const [featuredItems, setFeaturedItems] = useState<MediaItem[]>([])
+  const [featuredIndex, setFeaturedIndex] = useState(0)
   const [recentTrending, setRecentTrending] = useState<MediaItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Fetch Featured Hero item & trending items when landing on dashboard
-  useEffect(() => {
-    const loadDashboardData = async (): Promise<void> => {
-      try {
-        // Fetch 6 items to perfectly occupy all slots in our responsive grid-cols-6 row
-        const resMovies = await fetch(
-          `${API_BASE_URL}/api/movies?limit=6&sort=popularity&order=desc`
-        )
-        if (resMovies.ok) {
-          const moviesData = await resMovies.json()
-          if (moviesData.data && moviesData.data.length > 0) {
-            const mapped = moviesData.data.map((m: MediaItem) => ({
-              ...m,
-              slug: m.slug || getSlug(m.title || m.name)
-            }))
-            setFeaturedItem(mapped[0])
-            setRecentTrending(mapped)
-          }
+  // Fetch Featured Hero items & trending items when landing on dashboard
+  const loadDashboardData = useCallback(async (): Promise<void> => {
+    setLoading(true)
+    setError(null)
+    try {
+      // Fetch 6 trending items to perfectly occupy all slots in our responsive grid-cols-6 row
+      const resMovies = await fetch(`${API_BASE_URL}/api/movies?limit=6&sort=popularity&order=desc`)
+      // Fetch 10 recently added items to cycle through in the Billboard Hero
+      const resRecent = await fetch(
+        `${API_BASE_URL}/api/movies?limit=10&sort=created_at&order=desc`
+      )
+
+      let recentData: MediaItem[] = []
+      if (resRecent.ok) {
+        const dataJson = await resRecent.json()
+        if (dataJson.data && dataJson.data.length > 0) {
+          recentData = dataJson.data.map((m: MediaItem) => ({
+            ...m,
+            slug: m.slug || getSlug(m.title || m.name)
+          }))
         }
-      } catch (err) {
-        console.error('Failed to load dashboard highlights:', err)
       }
+
+      if (resMovies.ok) {
+        const moviesData = await resMovies.json()
+        if (moviesData.data && moviesData.data.length > 0) {
+          const mapped = moviesData.data.map((m: MediaItem) => ({
+            ...m,
+            slug: m.slug || getSlug(m.title || m.name)
+          }))
+          setRecentTrending(mapped)
+        } else {
+          setRecentTrending([])
+        }
+      } else {
+        setError('Failed to query catalog database.')
+      }
+
+      setFeaturedItems(recentData)
+      setFeaturedIndex(0)
+    } catch (err) {
+      console.error('Failed to load dashboard highlights:', err)
+      setError('Connection error or database offline.')
+    } finally {
+      setLoading(false)
     }
-    loadDashboardData()
   }, [getSlug, API_BASE_URL])
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadDashboardData()
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [loadDashboardData])
+
+  // Auto-swap the Billboard movie every 8 seconds
+  useEffect(() => {
+    if (featuredItems.length <= 1) return
+    const interval = setInterval(() => {
+      setFeaturedIndex((prev) => (prev + 1) % featuredItems.length)
+    }, 8000)
+    return () => clearInterval(interval)
+  }, [featuredItems])
+
+  const featuredItem = featuredItems[featuredIndex] || null
+
+  if (loading) {
+    return (
+      <div className="space-y-10 select-none">
+        {/* Billboard Hero Skeleton */}
+        <div className="relative overflow-hidden border border-border/40 bg-muted/20 px-8 sm:px-12 flex flex-col justify-center gap-4 h-95 sm:h-112.5 lg:h-130 xl:h-145 2xl:h-162.5">
+          <Skeleton className="h-5.5 w-36 bg-muted/60" />
+          <Skeleton className="h-12 w-2/3 bg-muted/60 mt-1" />
+          <Skeleton className="h-4.5 w-40 bg-muted/60" />
+          <Skeleton className="h-16 w-full bg-muted/40 mt-1" />
+          <div className="flex gap-3 mt-4">
+            <Skeleton className="h-10 w-32 bg-muted/60" />
+            <Skeleton className="h-10 w-32 bg-muted/60" />
+          </div>
+        </div>
+
+        {/* Database Highlights Grid Skeleton */}
+        <div className="space-y-6 px-12">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-48 bg-muted/60" />
+            <Skeleton className="h-4.5 w-32 bg-muted/60" />
+          </div>
+          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="flex flex-col gap-3 bg-muted/20 border border-border/30 p-3"
+              >
+                <Skeleton className="aspect-2/3 w-full bg-muted/50" />
+                <Skeleton className="h-4.5 w-4/5 bg-muted/50" />
+                <Skeleton className="h-3.5 w-1/2 bg-muted/30" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-6 text-center border border-border/50 bg-muted/20 max-w-lg mx-auto select-none">
+        <div className="relative flex h-14 w-14 items-center justify-center bg-muted/80 border border-border/10 mb-4">
+          <Film className="size-6 text-destructive" />
+        </div>
+        <h4 className="text-md font-black text-white uppercase tracking-wider mb-2">
+          Unable to Load Highlights
+        </h4>
+        <p className="text-xs text-muted-foreground/75 leading-relaxed max-w-sm mb-6 font-medium">
+          {error} Verify that your CaféVerse API backend services are running properly.
+        </p>
+        <button
+          onClick={loadDashboardData}
+          className="h-9 px-5 bg-primary text-primary-foreground text-xs font-black uppercase tracking-wider hover:bg-primary/95 transition-all cursor-pointer"
+        >
+          Retry Connection
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-10 animate-fade-in">
+    <div className="space-y-10">
       {/* Hero Billboard Section */}
       {featuredItem && (
-        <div className="relative overflow-hidden rounded-2xl border border-[#3c3a36] bg-[#2e2e2e]/40 select-none">
+        <div className="relative overflow-hidden border border-border bg-muted/40 select-none group/billboard h-95 sm:h-112.5 lg:h-130 xl:h-145 2xl:h-162.5 flex flex-col justify-center">
           {/* Image Backdrop with flat dark masking */}
-          <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 z-0 transition-all duration-700 ease-in-out">
             <img
+              key={featuredItem.id}
               src={getImageUrl(featuredItem.backdropPath)}
               alt={featuredItem.title || featuredItem.name}
-              className="h-full w-full object-cover opacity-25 transition-all duration-300 hover:scale-[1.01]"
+              className="h-full w-full object-cover opacity-50 animate-fade-in"
             />
-            {/* Elegant cinematic obsidian fade */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#232323] via-[#232323]/95 to-transparent z-10" />
-            <div className="absolute inset-0 bg-background/50 z-10 md:hidden" />
           </div>
 
-          <div className="relative z-20 max-w-2xl px-8 py-14 sm:px-12 flex flex-col items-start gap-4">
+          <div className="relative z-20 max-w-2xl px-8 sm:px-12 flex flex-col items-start gap-4">
             <div className="flex items-center gap-2.5 rounded-full bg-primary/10 px-3.5 py-1 text-[10px] font-black uppercase tracking-wider text-primary border border-primary/20">
-              <Flame className="size-3 text-primary animate-pulse" />
-              <span>FEATURED RELEASE</span>
+              <Flame className="size-3 text-destructive" />
+              <span>RECENTLY ADDED</span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter text-white uppercase italic leading-none">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter text-white uppercase italic leading-none line-clamp-2">
               {featuredItem.title || featuredItem.name}
             </h2>
 
@@ -72,17 +184,17 @@ export default function DashboardPage(): React.JSX.Element {
               </p>
             )}
 
-            <p className="text-xs text-muted-foreground/80 leading-relaxed line-clamp-3 font-medium max-w-[65ch]">
+            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 font-medium max-w-[65ch]">
               {featuredItem.overview}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 text-[10px] font-bold text-muted-foreground mt-2">
-              <span className="flex items-center gap-1.5 bg-[#2e2e2e]/70 border border-[#3c3a36] px-2.5 py-1 rounded-lg text-primary">
+              <span className="flex items-center gap-1.5 bg-muted/70 border border-border px-2.5 py-1 rounded-lg text-primary">
                 <Star className="size-3 fill-primary text-primary" />{' '}
                 {featuredItem.voteAverage?.toFixed(1) || 'N/A'} Score
               </span>
               {featuredItem.releaseDate && (
-                <span className="flex items-center gap-1.5 bg-[#2e2e2e]/50 border border-[#3c3a36] px-2.5 py-1 rounded-lg">
+                <span className="flex items-center gap-1.5 bg-muted/50 border border-border px-2.5 py-1 rounded-lg">
                   <Calendar className="size-3" /> {new Date(featuredItem.releaseDate).getFullYear()}
                 </span>
               )}
@@ -105,18 +217,18 @@ export default function DashboardPage(): React.JSX.Element {
                       (featuredItem.slug || getSlug(featuredItem.title || featuredItem.name))
                   )
                 }
-                className="flex items-center gap-2 h-10 rounded-xl bg-primary px-6 text-xs font-black uppercase tracking-wider text-primary-foreground hover:bg-primary/95 active:scale-98 transition-all duration-150 cursor-pointer shadow-md"
+                className="flex items-center gap-2 h-10 rounded-xl bg-primary px-6 text-xs font-black uppercase tracking-wider text-primary-foreground hover:bg-primary/95 cursor-pointer shadow-md"
               >
                 <Play className="size-3.5 fill-primary-foreground" />
-                <span>Stream Details</span>
+                <span>Watch Now</span>
               </button>
 
               <button
                 onClick={() => toggleWatchlist(featuredItem)}
-                className={`flex items-center gap-2 h-10 rounded-xl border px-5 text-xs font-black uppercase tracking-wider transition-all duration-150 active:scale-98 cursor-pointer ${
+                className={`flex items-center gap-2 h-10 rounded-xl px-5 text-xs font-black uppercase tracking-wider cursor-pointer ${
                   isItemInWatchlist(featuredItem)
-                    ? 'border-destructive/30 bg-destructive/15 text-destructive hover:bg-destructive/25'
-                    : 'border-[#3c3a36] bg-[#2e2e2e]/40 text-white hover:bg-[#2e2e2e]'
+                    ? 'bg-destructive/20 text-destructive hover:bg-destructive/30'
+                    : 'bg-muted/40 text-foreground hover:bg-muted'
                 }`}
               >
                 <Heart
@@ -130,11 +242,60 @@ export default function DashboardPage(): React.JSX.Element {
               </button>
             </div>
           </div>
+
+          {/* Slide navigation controls */}
+          {featuredItems.length > 1 && (
+            <>
+              {/* Left Chevron */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setFeaturedIndex(
+                    (prev) => (prev - 1 + featuredItems.length) % featuredItems.length
+                  )
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-xl text-white cursor-pointer hidden md:flex items-center justify-center"
+                title="Previous Highlight"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+
+              {/* Right Chevron */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setFeaturedIndex((prev) => (prev + 1) % featuredItems.length)
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-xl text-white cursor-pointer hidden md:flex items-center justify-center"
+                title="Next Highlight"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+
+              {/* Indicator dots */}
+              <div className="absolute bottom-4 right-8 z-30 flex items-center gap-1.5">
+                {featuredItems.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setFeaturedIndex(idx)
+                    }}
+                    className={`h-1.5 transition-all duration-300 rounded-full cursor-pointer ${
+                      idx === featuredIndex
+                        ? 'w-5 bg-primary'
+                        : 'w-1.5 bg-white/30 hover:bg-white/60'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {/* HORIZONTAL TRENDING SLIDERS */}
-      <div className="space-y-6">
+      <div className="space-y-6 px-12">
         <div className="flex items-center justify-between">
           <h3 className="text-md font-black tracking-widest text-white/95 uppercase flex items-center gap-2 select-none">
             <TrendingUp className="text-primary size-4.5" /> Database Highlights
@@ -155,15 +316,15 @@ export default function DashboardPage(): React.JSX.Element {
                 onClick={() =>
                   navigate('/movies/' + (item.slug || getSlug(item.title || item.name)))
                 }
-                className="group flex flex-col gap-3 rounded-2xl bg-[#2e2e2e]/40 border border-[#3c3a36]/50 p-3 transition-all duration-150 hover:bg-[#2e2e2e]/80 cursor-pointer"
+                className="group flex flex-col gap-3 bg-muted/40 border border-border/50 p-3 hover:bg-muted/80 cursor-pointer"
               >
-                <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-[#232323]">
+                <div className="relative aspect-2/3 overflow-hidden bg-card">
                   <img
                     src={getImageUrl(item.posterPath)}
                     alt={item.title || item.name}
-                    className="h-full w-full object-cover transition-all duration-300 group-hover:scale-[1.02]"
+                    className="h-full w-full object-cover"
                   />
-                  <div className="absolute top-2.5 right-2.5 flex h-6 items-center gap-0.5 rounded-lg bg-[#232323]/90 px-2 text-[10px] font-black text-primary border border-[#3c3a36] backdrop-blur-md">
+                  <div className="absolute top-2.5 right-2.5 flex h-6 items-center gap-0.5 rounded-lg bg-card/90 px-2 text-[10px] font-black text-primary border border-border backdrop-blur-md">
                     <Star className="size-3 fill-primary text-primary" />
                     {item.voteAverage?.toFixed(1) || 'N/A'}
                   </div>
@@ -189,9 +350,9 @@ export default function DashboardPage(): React.JSX.Element {
               </div>
             ))
           ) : (
-            <div className="col-span-full flex flex-col items-center justify-center py-16 px-6 text-center rounded-2xl border border-dashed border-[#3c3a36] bg-[#2e2e2e]/20 max-w-lg mx-auto">
-              <div className="relative flex h-14 w-14 items-center justify-center rounded-xl bg-[#2e2e2e]/80 border border-white/[0.03] mb-4">
-                <Film className="size-6 text-primary animate-pulse" />
+            <div className="col-span-full flex flex-col items-center justify-center py-16 px-6 text-center rounded-2xl border border-dashed border-border bg-muted/20 max-w-lg mx-auto">
+              <div className="relative flex h-14 w-14 items-center justify-center rounded-xl bg-muted/80 border border-border/10 mb-4">
+                <Film className="size-6 text-primary" />
               </div>
               <h4 className="text-md font-black text-white uppercase tracking-wider mb-2">
                 No Titles in Database
