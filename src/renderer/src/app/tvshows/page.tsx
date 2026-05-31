@@ -365,14 +365,24 @@ export default function TvShowsPage(): React.JSX.Element {
                     {item.title || item.name}
                   </h4>
                   <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold mt-0.5">
-                    <span>
-                      {item.releaseDate
-                        ? new Date(item.releaseDate).getFullYear()
-                        : item.firstAirDate
-                          ? new Date(item.firstAirDate).getFullYear()
-                          : 'N/A'}
+                    <span className="flex items-center gap-1">
+                      <span>
+                        {item.releaseDate
+                          ? new Date(item.releaseDate).getFullYear()
+                          : item.firstAirDate
+                            ? new Date(item.firstAirDate).getFullYear()
+                            : 'N/A'}
+                      </span>
+                      {(item.numberOfSeasons || item.numberOfEpisodes) && (
+                        <span className="text-muted-foreground/60 font-medium select-none text-[10px]">
+                          &bull; {item.numberOfSeasons && `${item.numberOfSeasons}S`}
+                          {item.numberOfSeasons && item.numberOfEpisodes && '/'}
+                          {item.numberOfEpisodes && `${item.numberOfEpisodes}E`}
+                        </span>
+                      )}
                     </span>
-                    <span className="flex items-center gap-1 text-[10px] bg-card border border-border px-2 py-0.5 rounded text-muted-foreground">
+
+                    <span className="flex items-center gap-1 text-[10px] bg-card border border-border px-2 py-0.5 rounded text-muted-foreground/50">
                       TV Series
                     </span>
                   </div>
