@@ -1,216 +1,263 @@
-# Cinema & TV Shows Backend Service
+# 🎬 Cinema & TV Shows Data Backend Service
 
-A high-performance, robust REST API built in Go (Golang) for movies and TV show metadata. Integrates with PostgreSQL for persistent storage, Redis for fast cache delivery, and seamlessly bridges with The Movie Database (TMDB) API for real-time season and episode synchronization.
+A RESTful API service custom-built in **Go (Golang)** using the **Gin Web Framework**. This service delivers metadata endpoints for movies and television series.
 
----
-
-## 🔒 Security & Authentication
-
-All API endpoints are public and do not require API Key authentication. Any client can request data without sending authentication headers.
+Engineered with structural resilience, the platform leverages **PostgreSQL** for persistent relational storage, **Redis** as an active high-speed caching tier, and features dynamic on-the-fly episode generation from the TV season metadata stored directly in the database.
 
 ---
 
-## 🚀 Running Locally
+## 🛠️ Tech Stack & Key Features
 
-1. **Prerequisites**: Ensure you have [Go](https://go.dev/) installed.
-2. **Build the Application**:
-
-   ```bash
-   go build -o moviebackend
-   ```
-
-3. **Run the Server**:
-
-   ```bash
-   ./moviebackend
-   ```
+- **Runtime & Web Architecture**: Go (Golang) + [Gin Gonic Framework](https://github.com/gin-gonic/gin) for high-concurrency routing.
+- **Relational Storage**: PostgreSQL equipped with an optimized connection pool provider for transactional safety.
+- **Dynamic JSONB Generation**: TV seasons metadata is loaded directly from the database's `seasons` JSONB column, with individual episodes dynamically generated on-the-fly to deliver zero-latency responses.
+- **Caching Layer**: Redis cache integration featuring fallback resilience (operates gracefully even if the cache service is offline).
+- **Graceful Shutdown**: Intercepts `SIGINT`/`SIGTERM` signals for clean server/database connection tear-downs.
+- **Dynamic CORS Engine**: Standard-compliant Cross-Origin Resource Sharing middleware supporting wildcard and credential-enabled origins.
+- **Robust Diagnostic Suite**: Live overall and sub-service level health monitoring via a dedicated JSON endpoint.
 
 ---
 
-## 📋 API Reference
+## 🚀 Getting Started
 
-### Movies API
+### 1. Prerequisites
 
-#### 1. List Movies (Paginated & Filterable)
+- **Go**: Version 1.20+ installed.
+- **Database Instances**: Accessible PostgreSQL and Redis service URIs.
 
-- **Endpoint**: `GET /api/movies`
-- **Query Parameters**:
-  - `page` _(default: `1`)_: Page number.
-  - `limit` _(default: `20`)_: Number of items per page (maximum: `100`).
-  - `search` _(optional)_: Matches titles, original titles, or overviews.
-  - `genre` _(optional)_: Filters items containing this specific genre in their `genres` array.
-  - `sort` _(default: `popularity`)_: Fields to sort by (`popularity`, `vote_average`, `release_date`, `created_at`, `title`).
-  - `order` _(default: `desc`)_: Sort direction (`asc`, `desc`).
-- **Sample URL**: `/api/movies?page=1&limit=10&genre=Action&sort=vote_average`
-- **Sample Response**:
+### 2. Environment Configuration
+
+Create a `.env` file in the root of the project to declare active connection strings:
+
+```env
+# Server Port Configuration
+PORT=8080
+GIN_MODE=debug # Use 'release' in production Environments
+
+# Storage Connection Strings
+DATABASE_URL="postgres://username:password@hostname:port/database"
+REDIS_URL="redis://:password@hostname:port"
+
+# JWT Security Configuration
+JWT_SECRET="generate-a-strong-32-byte-secret-key-in-production"
+```
+
+### 3. Install Dependencies & Build
+
+Fetch modules declared in `go.mod` and compile the optimized binary:
+
+```bash
+# Tidy up Go modules
+go mod tidy
+
+# Build the executable binary
+go build -o moviebackend main.go
+```
+
+### 4. Running the Service
+
+Execute the compiled backend application binary:
+
+```bash
+./moviebackend
+```
+
+---
+
+## 📋 Comprehensive API Reference
+
+### 🟢 Service Health & Diagnostics
+
+Verify the current operational status of the web server, PostgreSQL pools, and Redis nodes.
+
+- **Endpoint**: `GET /health`
+- **Output Sample (Optimal State)**:
 
   ```json
   {
-    "data": [
-      {
-        "id": 12,
-        "tmdbId": 27205,
-        "imdbId": "tt1375666",
-        "title": "Inception",
-        "genres": ["Action", "Science Fiction", "Adventure"],
-        "voteAverage": 8.3,
-        "popularity": 124.5,
-        "cast": [
-          {
-            "name": "Leonardo DiCaprio",
-            "character": "Cobb",
-            "profilePath": "/path.jpg"
-          }
-        ],
-        "createdAt": "2026-05-25T12:00:00Z"
+    "status": "healthy",
+    "timestamp": "2026-05-28T10:15:00Z",
+    "environment": "debug",
+    "services": {
+      "postgres": {
+        "status": "healthy",
+        "message": "connection is fully functional"
+      },
+      "redis": {
+        "status": "healthy",
+        "message": "ping successful"
       }
-    ],
-    "meta": {
-      "currentPage": 1,
-      "itemCount": 1,
-      "itemsPerPage": 10,
-      "totalItems": 1,
-      "totalPages": 1
     }
   }
   ```
 
-#### 2. Get Movie by Database ID
+---
 
-- **Endpoint**: `GET /api/movies/:id`
-- **Sample URL**: `/api/movies/12`
+### 🔐 Authentication & Session Endpoints
 
-#### 3. Get Movie by TMDB ID
+Secure endpoints for registering users and signing in. Passwords are encrypted using high-performance bcrypt hashing, and sessions are authorized via JWT.
 
-- **Endpoint**: `GET /api/movies/tmdb/:tmdbId`
-- **Sample URL**: `/api/movies/tmdb/27205`
+#### 1. User Registration
+
+- **Endpoint**: `POST /api/auth/register`
+- **Request Body**:
+
+  ```json
+  {
+    "username": "testuser",
+    "email": "test@example.com",
+    "password": "password123"
+  }
+  ```
+
+- **Response status**: `201 Created`
+- **Output Sample**:
+
+  ```json
+  {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": 1,
+      "username": "testuser",
+      "email": "test@example.com",
+      "createdAt": "2026-05-31T05:00:00Z",
+      "updatedAt": "2026-05-31T05:00:00Z"
+    }
+  }
+  ```
+
+#### 2. User Login
+
+- **Endpoint**: `POST /api/auth/login`
+- **Request Body**:
+
+  ```json
+  {
+    "email": "test@example.com",
+    "password": "password123"
+  }
+  ```
+
+- **Response status**: `200 OK`
+- **Output Sample**: Same as registration.
 
 ---
 
-### TV Shows API
+### 🎥 Movies API Endpoints
 
-#### 1. List TV Shows (Paginated & Filterable)
+#### 1. List Movies (Paginated, Searchable & Filterable)
+
+Returns a cursor-paginated list of movies.
+
+- **Endpoint**: `GET /api/movies`
+- **Query Parameters**:
+
+  | Parameter | Type    | Default      | Description                                                                         |
+  | :-------- | :------ | :----------- | :---------------------------------------------------------------------------------- |
+  | `page`    | Integer | `1`          | Pagination offset index.                                                            |
+  | `limit`   | Integer | `20`         | Max results returned (cap: `100`).                                                  |
+  | `search`  | String  | _None_       | Performs fuzzy match on movie titles, synonyms, or overviews.                       |
+  | `genre`   | String  | _None_       | Filters output containing the matching genre item.                                  |
+  | `sort`    | String  | `popularity` | Sort criteria: `popularity`, `vote_average`, `release_date`, `created_at`, `title`. |
+  | `order`   | String  | `desc`       | Ordering sequence: `asc` or `desc`.                                                 |
+
+- **Example Call**: `/api/movies?page=1&limit=10&genre=Action&sort=vote_average`
+
+#### 2. Get Movie by Internal Database ID
+
+Retrieves details for a single movie based on the primary ID.
+
+- **Endpoint**: `GET /api/movies/:id`
+
+#### 3. Get Movie by TMDB Identifier
+
+- **Endpoint**: `GET /api/movies/tmdb/:tmdbId`
+
+#### 4. Get Movie by Unique URL Slug
+
+- **Endpoint**: `GET /api/movies/slug/:slug`
+- **Description**: Highly optimized indexed database query matching the movie's title in a URL-friendly slug format (e.g. `/api/movies/slug/harry-potter-and-the-philosophers-stone`).
+
+#### 5. Get Unique Movie Genres Catalog
+
+- **Endpoint**: `GET /api/movies/genres`
+- **Description**: Returns a sorted alphabetical list of all unique movie genres stored in the database.
+
+---
+
+### 📺 TV Shows API Endpoints
+
+#### 1. List TV Shows (Paginated & Sorted)
 
 - **Endpoint**: `GET /api/tvshows`
-- **Query Parameters**:
-  - `page` _(default: `1`)_
-  - `limit` _(default: `20`)_
-  - `search` _(optional)_: Matches names, original names, or overviews.
-  - `genre` _(optional)_
-  - `sort` _(default: `popularity`)_: Fields to sort by (`popularity`, `vote_average`, `first_air_date`, `created_at`, `name`).
-  - `order` _(default: `desc`)_
-- **Sample URL**: `/api/tvshows?page=1&limit=5&sort=first_air_date`
+- **Query Parameters**: Same as movies endpoint (Sort parameters support: `popularity`, `vote_average`, `first_air_date`, `created_at`, `name`).
 
 #### 2. Get TV Show by Database ID
 
 - **Endpoint**: `GET /api/tvshows/:id`
-- **Sample URL**: `/api/tvshows/4`
 
-#### 3. Get TV Show by TMDB ID
+#### 3. Get TV Show by TMDB Identifier
 
 - **Endpoint**: `GET /api/tvshows/tmdb/:tmdbId`
-- **Sample URL**: `/api/tvshows/tmdb/1399`
 
-#### 4. Get TV Show Season Details
+#### 4. Get TV Show by Unique URL Slug
+
+- **Endpoint**: `GET /api/tvshows/slug/:slug`
+- **Description**: Highly optimized indexed database query matching the TV show's name in a URL-friendly slug format (e.g. `/api/tvshows/slug/breaking-bad`).
+
+#### 5. Get Unique TV Show Genres Catalog
+
+- **Endpoint**: `GET /api/tvshows/genres`
+- **Description**: Returns a sorted alphabetical list of all unique TV show genres stored in the database.
+
+#### 6. Get Season Details
 
 - **Endpoint**: `GET /api/tvshows/:id/seasons/:season`
-- **Sample URL**: `/api/tvshows/1/seasons/1`
-- **Description**: Returns season details including the full list of episodes in that season.
+- **Description**: Returns structural metadata and an array of all corresponding episodes for the specified season. Episodes are dynamically generated on-the-fly based on the season's `episodeCount` stored in the database's `seasons` JSONB column.
 
-#### 5. Get TV Show Episode Details
+#### 7. Get Episode Details
 
 - **Endpoint**: `GET /api/tvshows/:id/seasons/:season/episodes/:episode`
-- **Sample URL**: `/api/tvshows/1/seasons/1/episodes/2`
-- **Description**: Returns specific episode details.
+- **Description**: Returns details for a specific episode. Dynamically generated from the local database `seasons` JSONB column based on the season's `episodeCount`.
 
-#### 6. Get TV Show Episode by SxxExx Notation
+#### 8. Smart Episode Routing (SxxExx Format)
 
 - **Endpoint**: `GET /api/tvshows/:id/episodes/:s_e`
-- **Sample URL**: `/api/tvshows/1/episodes/S01E02`
-- **Description**: Parses case-insensitive standard SxxExx notation (e.g., `S01E02` or `s1e2`) and returns the specific episode details.
+- **Description**: Accepts flexible, case-insensitive episodic patterns (e.g. `/api/tvshows/5/episodes/s02e08` or `/api/tvshows/5/episodes/S2E8`). Dynamically resolves the target episode from the database's `seasons` JSONB metadata.
 
-# Player Embed Endpoints
+---
 
-These endpoints are used to embed the video player for movies and TV show episodes.
+## 🌐 Production Deployment Guide
 
-## Base URL for embeds
+### Deploying to Persistent Host Services (Recommended)
 
-The embed player is served from `https://vaplayer.ru/embed/`.
+Because this backend functions as a stateful, long-running Go service, hosting platforms supporting standard binary files or Docker containers are recommended.
 
-### **1. Movie Embed**
+#### Render / Railway / Fly.io
 
-Embeds a movie player using an IMDB or TMDB ID.
+1. Push your repository to GitHub.
+2. Link your repository inside your hosting panel.
+3. Configure the build parameters:
+   - **Build Command**: `go build -o main main.go`
+   - **Start Command**: `./main`
+4. Inject your `.env` variables into the environment configurations panel of your host provider.
 
-- **Endpoint:** `GET /embed/movie/{id}`
-- **Path Parameter:**
-  - `id` (required): IMDB ID (with "tt" prefix) or TMDB ID (numeric only).
-- **Example URL:**
-  - **IMDB ID:** `https://vaplayer.ru/embed/movie/tt23779058`
-  - **TMDB ID:** `https://vaplayer.ru/embed/movie/1147301`
+#### Deploying to Vercel (Serverless)
 
-#### **2. TV Show Episode Embed**
+We have pre-configured this project to deploy seamlessly as a single-function **Go Serverless Function** on Vercel!
 
-Embeds a specific TV show episode. The `id` can be an IMDB or TMDB ID.
+1. Push your repository to GitHub.
+2. Go to the [Vercel Dashboard](https://vercel.com) and click **Add New Project**.
+3. Import your GitHub repository.
+4. Vercel will automatically detect `vercel.json` and configure the Go serverless environment.
+5. In **Environment Variables**, add the active credentials:
+   - `DATABASE_URL` (your PostgreSQL connection pool string)
+   - `REDIS_URL` (your Redis connection string)
+   - `JWT_SECRET` (your session encryption key)
+6. Click **Deploy**. Vercel compiles the Go source and routes all routes (`/api/*`, `/health`) to our high-performance serverless entrypoint `api/index.go`.
 
-- **Endpoint:** `GET /embed/tv/{id}/{season}/{episode}`
-- **URL Formats:** The endpoint supports several formats for specifying the season and episode.
-  | Format | Example URL |
-  | :--- | :--- |
-  | Numeric | `/embed/tv/205715/1/1` |
-  | SxxExx | `/embed/tv/205715/S01E01` |
-  | Dash | `/embed/tv/205715/1-1` |
-  | Query String | `/embed/tv?tmdb=205715&season=1&episode=1` |
+---
 
-### 🛠️ Optional Query Parameters (for all embed endpoints)
+## ⚖️ DMCA & Copyright Disclaimer
 
-You can customize the player's appearance, playback, and subtitles.
-
-- **UI Colors:**
-  - `primaryColor`: Primary UI color (e.g., `#ff0000`).
-- **Title & Display:**
-  - `title`: Custom title for the player (URL encoded).
-  - `poster`: URL for a custom poster/thumbnail image.
-  - `showTitle`: Show or hide the title overlay (default: `true`).
-- **Playback:**
-  - `startAt` or `resumeAt`: Start playback at a specific time in seconds.
-- **Subtitles:**
-  - `sub_url` or `sub_file`: URL to a remote subtitle file (`.srt` or `.vtt`).
-  - `sub_label`: Label for the subtitle track.
-  - `sub_lang`: Subtitle language code (default: `en`).
-  - `sub_default`: Set this subtitle as the default track (`true`/`false`).
-  - `ds_lang` or `lang`: Default subtitle language for OpenSubtitles auto-search (e.g., `en`, `de`, `eng`).
-
-### 📊 Content & Metadata Endpoints
-
-These endpoints provide lists of available content and library statistics.
-
-#### **1. Content Library Stats**
-
-Returns total counts of movies, TV shows, episodes, and people in the library. The response is cached and updated every 24 hours.
-
-- **Endpoint:** `GET /imdb/api/?action=stats`
-- **Example Response:**
-
-```json
-{
-  "content_library": {
-    "movies": 89155,
-    "tv_shows": 19012,
-    "episodes": 464692
-  },
-  "cached": true,
-  "generated_at": "2026-03-05T14:39:56+00:00"
-}
-```
-
-#### **2. List Latest Content**
-
-Returns a paginated list (24 results per page) of the most recently added movies, TV shows, or episodes.
-
-- **Endpoint:** `GET /movies/latest/page-{PAGE}.json`
-- **Endpoint:** `GET /tvshows/latest/page-{PAGE}.json`
-- **Endpoint:** `GET /episodes/latest/page-{PAGE}.json`
-
-### 🛡️ Domain Whitelisting
-
-For security, VidAPI supports domain whitelisting. Only domains you configure in the dashboard can embed the player. API keys are required for authenticated requests.
+This backend service does not host, store, download, or stream any media files, video streams, or copyrighted assets. It functions purely as a **Metadata API Engine** indexing details, descriptions, crew metadata, and chronological scheduling information fetched dynamically from community-maintained public databases (such as TMDB). No copyrighted media distributions occur under this application.

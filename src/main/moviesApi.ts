@@ -45,7 +45,7 @@ export interface MetaPagination {
   totalPages: number
 }
 
-const API_BASE_URL = 'https://api.movies.voidart.us'
+const API_BASE_URL = 'https://movies-api-silk-phi.vercel.app'
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 interface CacheEntry {

@@ -6,7 +6,7 @@ import { MediaItem } from '@/types'
 import { cleanReleaseNotes } from '@/lib/utils'
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/original'
-const API_BASE_URL = 'https://api.movies.voidart.us'
+const API_BASE_URL = 'https://movies-api-silk-phi.vercel.app'
 
 export interface AppContextType {
   watchlist: MediaItem[]

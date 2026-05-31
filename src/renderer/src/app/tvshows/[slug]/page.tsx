@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
-import { Star, ChevronLeft, Play, Tv, Calendar, List } from 'lucide-react'
+import { Star, ChevronLeft, Play, Tv, List, Calendar } from 'lucide-react'
 import { MediaItem } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -114,7 +114,9 @@ export default function TvShowDetailPage(): React.JSX.Element {
     const fetchSeasonDetails = async (): Promise<void> => {
       setLoadingSeason(true)
       try {
-        const response = await fetch(`${API_BASE_URL}/api/tvshows/${show.id}/seasons/${activeSeason}`)
+        const response = await fetch(
+          `${API_BASE_URL}/api/tvshows/${show.id}/seasons/${activeSeason}`
+        )
         if (response.ok) {
           const data = await response.json()
           setSeasonDetails(data)
@@ -328,96 +330,122 @@ export default function TvShowDetailPage(): React.JSX.Element {
 
           {/* Horizontal Season Tabs */}
           <div className="flex flex-row items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {seasonsArray.map((seasonNum) => (
-              <button
-                key={seasonNum}
-                onClick={() => {
-                  setActiveSeason(seasonNum)
-                  setActiveEpisode(1)
-                }}
-                className={`px-6 py-3 rounded-xl text-xs font-black tracking-widest uppercase transition-all duration-300 cursor-pointer shrink-0 border ${
-                  activeSeason === seasonNum
-                    ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20'
-                    : 'bg-muted/30 border-border text-muted-foreground hover:text-foreground hover:bg-accent'
-                }`}
-              >
-                Season {seasonNum}
-              </button>
-            ))}
+            {seasonsArray.map((seasonNum) => {
+              const matchedSeason = show.seasons?.find((s) => s.seasonNumber === seasonNum)
+              const seasonLabel = matchedSeason?.name || `Season ${seasonNum}`
+              return (
+                <button
+                  key={seasonNum}
+                  onClick={() => {
+                    setActiveSeason(seasonNum)
+                    setActiveEpisode(1)
+                  }}
+                  className={`px-6 py-3 rounded-xl text-xs font-black tracking-widest uppercase transition-all duration-300 cursor-pointer shrink-0 border ${
+                    activeSeason === seasonNum
+                      ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20'
+                      : 'bg-muted/30 border-border text-muted-foreground hover:text-foreground hover:bg-accent'
+                  }`}
+                  title={seasonLabel}
+                >
+                  {seasonLabel}
+                </button>
+              )
+            })}
           </div>
 
           {/* Episodes Explorer */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between border-b border-border/40 pb-2">
               <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                Episode Catalog (Season {activeSeason})
+                Episode Directory (Season {activeSeason})
               </span>
             </div>
 
             {loadingSeason ? (
-              <div className="flex flex-col gap-4 py-8">
-                <Skeleton className="h-16 w-full bg-card rounded-xl" />
-                <Skeleton className="h-16 w-full bg-card rounded-xl" />
-                <Skeleton className="h-16 w-full bg-card rounded-xl" />
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 lg:grid-cols-12 gap-2">
+                {Array.from({ length: 12 }).map((_, idx) => (
+                  <Skeleton key={idx} className="h-12 w-full bg-card rounded-xl" />
+                ))}
               </div>
             ) : seasonDetails && seasonDetails.episodes && seasonDetails.episodes.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {seasonDetails.episodes.map((ep) => {
-                  const isActive = activeEpisode === ep.episodeNumber
+              <div className="space-y-6">
+                {/* High Density Episode Selector Grid */}
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-2">
+                  {seasonDetails.episodes.map((ep) => {
+                    const isActive = activeEpisode === ep.episodeNumber
+                    return (
+                      <button
+                        key={ep.id}
+                        onClick={() => {
+                          setActiveEpisode(ep.episodeNumber)
+                          const playerEl = document.getElementById('cafeverse-player')
+                          playerEl?.scrollIntoView({ behavior: 'smooth' })
+                        }}
+                        className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20'
+                            : 'bg-card/40 border-border text-foreground hover:bg-accent/60'
+                        }`}
+                      >
+                        <span
+                          className={`text-[8px] font-bold uppercase tracking-wider ${isActive ? 'text-primary-foreground/75' : 'text-muted-foreground'}`}
+                        >
+                          Ep
+                        </span>
+                        <span className="text-sm font-black leading-none mt-0.5">
+                          {ep.episodeNumber}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Selected Episode Cinematic Overview details card */}
+                {(() => {
+                  const currentEp =
+                    seasonDetails.episodes.find((e) => e.episodeNumber === activeEpisode) ||
+                    seasonDetails.episodes[0]
+                  if (!currentEp) return null
+
                   return (
-                    <div
-                      key={ep.id}
-                      onClick={() => {
-                        setActiveEpisode(ep.episodeNumber)
-                        const playerEl = document.getElementById('cafeverse-player')
-                        playerEl?.scrollIntoView({ behavior: 'smooth' })
-                      }}
-                      className={`flex flex-col sm:flex-row gap-4 p-4 rounded-xl border transition-all cursor-pointer text-left ${
-                        isActive
-                          ? 'bg-primary/5 border-primary/40'
-                          : 'bg-card/40 border-border hover:bg-accent/40'
-                      }`}
-                    >
-                      {ep.stillPath ? (
-                        <div className="w-full sm:w-32 aspect-video overflow-hidden rounded-lg bg-muted shrink-0">
-                          <img
-                            src={getImageUrl(ep.stillPath)}
-                            alt={ep.name}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-full sm:w-32 aspect-video bg-muted flex items-center justify-center rounded-lg border border-border shrink-0">
-                          <Tv className="size-6 text-muted-foreground" />
-                        </div>
-                      )}
-                      <div className="flex-1 space-y-1.5 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <h4 className="font-black text-sm uppercase tracking-wide text-foreground truncate">
-                            {ep.episodeNumber}. {ep.name || `Episode ${ep.episodeNumber}`}
+                    <div className="flex flex-col md:flex-row gap-5 p-5 rounded-2xl bg-card/25 border border-border/80 text-left">
+                      <div className="flex-1 space-y-3 min-w-0">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <h4 className="font-black text-base uppercase tracking-wider text-white">
+                            Episode {currentEp.episodeNumber} &bull;{' '}
+                            {currentEp.name || `Episode ${currentEp.episodeNumber}`}
                           </h4>
-                          {ep.airDate && (
-                            <span className="text-[10px] text-muted-foreground/80 font-bold shrink-0 flex items-center gap-1">
-                              <Calendar className="size-3" />
-                              {new Date(ep.airDate).toLocaleDateString(undefined, {
-                                month: 'short',
+                          {currentEp.airDate && (
+                            <span className="text-[10px] text-muted-foreground/80 font-extrabold shrink-0 flex items-center gap-1">
+                              <Calendar className="size-3.5 text-primary" />
+                              {new Date(currentEp.airDate).toLocaleDateString(undefined, {
+                                month: 'long',
+                                day: 'numeric',
                                 year: 'numeric'
                               })}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed font-medium">
-                          {ep.overview || 'No synopsis description is available for this episode.'}
+                        <p className="text-sm text-muted-foreground leading-relaxed font-medium">
+                          {currentEp.overview ||
+                            'No synopsis description is available for this episode.'}
                         </p>
                       </div>
                     </div>
                   )
-                })}
+                })()}
               </div>
             ) : (
               // Fallback if API does not return episodes - dynamically generate basic index lists based on numbers
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                {Array.from({ length: show.numberOfEpisodes ? Math.ceil(show.numberOfEpisodes / seasonsCount) : 10 }, (_, idx) => idx + 1).map((epNum) => {
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-2">
+                {Array.from(
+                  {
+                    length: show.numberOfEpisodes
+                      ? Math.ceil(show.numberOfEpisodes / seasonsCount)
+                      : 10
+                  },
+                  (_, idx) => idx + 1
+                ).map((epNum) => {
                   const isActive = activeEpisode === epNum
                   return (
                     <button
@@ -427,16 +455,18 @@ export default function TvShowDetailPage(): React.JSX.Element {
                         const playerEl = document.getElementById('cafeverse-player')
                         playerEl?.scrollIntoView({ behavior: 'smooth' })
                       }}
-                      className={`flex flex-col items-center justify-center p-4 rounded-xl border text-center gap-1.5 cursor-pointer transition-all ${
+                      className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-primary/10 border-primary text-primary shadow-lg shadow-primary/5'
-                          : 'bg-card/40 border-border text-foreground hover:bg-accent'
+                          ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20'
+                          : 'bg-card/40 border-border text-foreground hover:bg-accent/60'
                       }`}
                     >
-                      <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                        Episode
+                      <span
+                        className={`text-[8px] font-bold uppercase tracking-wider ${isActive ? 'text-primary-foreground/75' : 'text-muted-foreground'}`}
+                      >
+                        Ep
                       </span>
-                      <span className="text-2xl font-black">{epNum}</span>
+                      <span className="text-sm font-black leading-none mt-0.5">{epNum}</span>
                     </button>
                   )
                 })}

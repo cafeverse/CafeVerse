@@ -4,6 +4,28 @@ export interface CastMember {
   profilePath: string
 }
 
+export interface Episode {
+  id: number
+  name: string
+  overview: string
+  episodeNumber: number
+  seasonNumber: number
+  airDate?: string | null
+  stillPath?: string | null
+  voteAverage?: number
+}
+
+export interface SeasonMeta {
+  id: number
+  airDate?: string | null
+  episodes?: Episode[] | null
+  name: string
+  overview?: string | null
+  seasonNumber: number
+  posterPath?: string | null
+  episodeCount?: number
+}
+
 export interface MediaItem {
   id: number
   tmdbId: number
@@ -33,6 +55,7 @@ export interface MediaItem {
   numberOfEpisodes?: number
   cast?: CastMember[]
   slug?: string
+  seasons?: SeasonMeta[]
 }
 
 export interface MetaPagination {
