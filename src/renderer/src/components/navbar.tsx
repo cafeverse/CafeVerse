@@ -285,19 +285,19 @@ export const Navbar: React.FC<NavbarProps> = ({ watchlistCount, updateAvailable 
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-border/30" />
               <DropdownMenuGroup className="p-1">
-                <DropdownMenuItem className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-accent/50 hover:text-accent-foreground transition-colors">
+                <DropdownMenuItem className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-xs font-bold text-muted-foreground transition-colors">
                   <User className="size-4 text-primary" />
                   <span>My Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-accent/50 hover:text-accent-foreground transition-colors">
+                <DropdownMenuItem className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-xs font-bold text-muted-foreground transition-colors">
                   <Heart className="size-4 text-primary" />
                   <span>Favorites</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-accent/50 hover:text-accent-foreground transition-colors">
+                <DropdownMenuItem className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-xs font-bold text-muted-foreground transition-colors">
                   <History className="size-4 text-primary" />
                   <span>Watch History</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-accent/50 hover:text-accent-foreground transition-colors">
+                <DropdownMenuItem className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-xs font-bold text-muted-foreground transition-colors">
                   <Settings className="size-4 text-primary" />
                   <span>Settings</span>
                 </DropdownMenuItem>
