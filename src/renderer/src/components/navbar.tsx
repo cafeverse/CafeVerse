@@ -208,7 +208,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ watchlistCount, setOpen
   </div>
 )
 
-const getInitials = (name?: string) => {
+const getInitials = (name?: string): string => {
   if (!name) return 'U'
   return name.slice(0, 2).toUpperCase()
 }

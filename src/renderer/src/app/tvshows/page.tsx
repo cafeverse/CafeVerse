@@ -174,7 +174,7 @@ export default function TvShowsPage(): React.JSX.Element {
   return (
     <div className="space-y-8 md:space-y-10 animate-fade-in pb-12">
       {/* 1. CINEMATIC CONTROL CENTER */}
-      <div className="flex flex-col gap-6 bg-card/25 border border-border/40 p-6 sm:p-8 rounded-[2rem] backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
+      <div className="flex flex-col gap-6 bg-card/25 border border-border/40 p-6 sm:p-8 rounded-4xl backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
         {/* Ambient background glow inside the panel */}
         <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-primary/5 blur-[80px] pointer-events-none group-hover:bg-primary/10 transition-colors duration-700" />
 

@@ -36,7 +36,6 @@ export default function DashboardPage(): React.JSX.Element {
   const [loadingGenre, setLoadingGenre] = useState(false)
   const [activeMediaTab, setActiveMediaTab] = useState<'movie' | 'tv'>('movie')
 
-
   // Fetch Featured Hero items, top rated, and unique genres when landing on dashboard
   const loadDashboardData = useCallback(async (): Promise<void> => {
     setLoading(true)
@@ -46,7 +45,7 @@ export default function DashboardPage(): React.JSX.Element {
       const resRecent = await fetch(
         `${API_BASE_URL}/api/movies?limit=10&sort=created_at&order=desc`
       )
-      
+
       // 2. Fetch top rated movies and TV shows separately (no mixing)
       const [resTopMovies, resTopTv] = await Promise.all([
         fetch(`${API_BASE_URL}/api/movies?limit=10&sort=vote_average&order=desc`),
@@ -129,7 +128,7 @@ export default function DashboardPage(): React.JSX.Element {
   }, [getSlug, API_BASE_URL])
 
   // Instant zero-motion genre active pill tab switcher
-  const handleGenreChange = async (genre: string) => {
+  const handleGenreChange = async (genre: string): Promise<void> => {
     setSelectedGenre(genre)
     setLoadingGenre(true)
     try {
@@ -155,7 +154,7 @@ export default function DashboardPage(): React.JSX.Element {
   }
 
   // Instantly swap media tab (Movies vs TV shows) and update the genres shelf
-  const handleMediaTabChange = async (tab: 'movie' | 'tv') => {
+  const handleMediaTabChange = async (tab: 'movie' | 'tv'): Promise<void> => {
     setActiveMediaTab(tab)
     setLoadingGenre(true)
     try {
@@ -231,20 +230,32 @@ export default function DashboardPage(): React.JSX.Element {
 
         {/* Skeletons for shelves */}
         <div className="space-y-6 px-12">
-           <Skeleton className="h-6 w-48 bg-muted/60" />
-           <div className="flex gap-5 overflow-x-auto pb-4 scrollbar-none">
+          <Skeleton className="h-6 w-48 bg-muted/60" />
+          <div className="flex gap-5 overflow-x-auto pb-4 scrollbar-none">
             {Array.from({ length: 6 }).map((_, idx) => (
-              <div key={idx} className="flex flex-col gap-3 bg-muted/20 border border-border/30 p-3 shrink-0 w-40 sm:w-44"><Skeleton className="aspect-2/3 w-full bg-muted/50" /><Skeleton className="h-4.5 w-4/5 bg-muted/50" /></div>
+              <div
+                key={idx}
+                className="flex flex-col gap-3 bg-muted/20 border border-border/30 p-3 shrink-0 w-40 sm:w-44"
+              >
+                <Skeleton className="aspect-2/3 w-full bg-muted/50" />
+                <Skeleton className="h-4.5 w-4/5 bg-muted/50" />
+              </div>
             ))}
-           </div>
+          </div>
         </div>
         <div className="space-y-6 px-12">
-           <Skeleton className="h-6 w-48 bg-muted/60" />
-           <div className="flex gap-5 overflow-x-auto pb-4 scrollbar-none">
+          <Skeleton className="h-6 w-48 bg-muted/60" />
+          <div className="flex gap-5 overflow-x-auto pb-4 scrollbar-none">
             {Array.from({ length: 6 }).map((_, idx) => (
-              <div key={idx} className="flex flex-col gap-3 bg-muted/20 border border-border/30 p-3 shrink-0 w-40 sm:w-44"><Skeleton className="aspect-2/3 w-full bg-muted/50" /><Skeleton className="h-4.5 w-4/5 bg-muted/50" /></div>
+              <div
+                key={idx}
+                className="flex flex-col gap-3 bg-muted/20 border border-border/30 p-3 shrink-0 w-40 sm:w-44"
+              >
+                <Skeleton className="aspect-2/3 w-full bg-muted/50" />
+                <Skeleton className="h-4.5 w-4/5 bg-muted/50" />
+              </div>
             ))}
-           </div>
+          </div>
         </div>
 
         {/* Curated Genres Grid Skeleton */}
@@ -494,7 +505,7 @@ export default function DashboardPage(): React.JSX.Element {
         </div>
       )}
 
-       {/* TOP RATED MOVIES CAROUSEL */}
+      {/* TOP RATED MOVIES CAROUSEL */}
       {topRatedMovies && topRatedMovies.length > 0 && (
         <div className="space-y-6 px-12 select-none">
           <div className="flex items-center justify-between">
@@ -535,9 +546,7 @@ export default function DashboardPage(): React.JSX.Element {
                   </h4>
                   <div className="flex items-center justify-between text-[9px] text-muted-foreground/60 font-semibold mt-0.5">
                     <span>
-                      {item.releaseDate
-                        ? new Date(item.releaseDate).getFullYear()
-                        : 'N/A'}
+                      {item.releaseDate ? new Date(item.releaseDate).getFullYear() : 'N/A'}
                     </span>
                     <span className="uppercase text-primary font-black">{item.contentType}</span>
                   </div>
@@ -589,9 +598,7 @@ export default function DashboardPage(): React.JSX.Element {
                   </h4>
                   <div className="flex items-center justify-between text-[9px] text-muted-foreground/60 font-semibold mt-0.5">
                     <span>
-                      {item.firstAirDate
-                        ? new Date(item.firstAirDate).getFullYear()
-                        : 'Series'}
+                      {item.firstAirDate ? new Date(item.firstAirDate).getFullYear() : 'Series'}
                     </span>
                     <span className="uppercase text-primary font-black">{item.contentType}</span>
                   </div>
@@ -708,7 +715,8 @@ export default function DashboardPage(): React.JSX.Element {
                       </div>
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground/60 font-semibold mt-2 border-t border-border/20 pt-2">
                         <span>
-                          Released: {item.releaseDate
+                          Released:{' '}
+                          {item.releaseDate
                             ? new Date(item.releaseDate).getFullYear()
                             : item.firstAirDate
                               ? new Date(item.firstAirDate).getFullYear()

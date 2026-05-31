@@ -15,7 +15,7 @@ export default function LoginPage(): React.JSX.Element {
 
   const navigate = useNavigate()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
     setValidationError(null)
     clearError()
@@ -29,8 +29,9 @@ export default function LoginPage(): React.JSX.Element {
     try {
       await login(email, password)
       navigate('/')
-    } catch (err: any) {
-      console.error('Login error:', err)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error('Login error:', message)
     } finally {
       setIsLoading(false)
     }

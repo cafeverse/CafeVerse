@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useState } from 'react'
 
 export interface User {
   id: number
@@ -30,27 +31,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const API_BASE_URL = 'https://movies-api-silk-phi.vercel.app'
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(null)
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
-
-  // Load persisted session on mount
-  useEffect(() => {
+  const [token, setToken] = useState<string | null>(() => {
     try {
-      const savedToken = localStorage.getItem('cafeverse_auth_token')
-      const savedUser = localStorage.getItem('cafeverse_auth_user')
-
-      if (savedToken && savedUser) {
-        setToken(savedToken)
-        setUser(JSON.parse(savedUser))
-      }
-    } catch (e) {
-      console.error('Failed to restore auth session:', e)
-    } finally {
-      setIsLoading(false)
+      return localStorage.getItem('cafeverse_auth_token')
+    } catch {
+      return null
     }
-  }, [])
+  })
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const savedUser = localStorage.getItem('cafeverse_auth_user')
+      return savedUser ? JSON.parse(savedUser) : null
+    } catch {
+      return null
+    }
+  })
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
 
   const login = async (email: string, password: string): Promise<void> => {
     setIsLoading(true)
@@ -73,8 +70,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(receivedUser)
       localStorage.setItem('cafeverse_auth_token', receivedToken)
       localStorage.setItem('cafeverse_auth_user', JSON.stringify(receivedUser))
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong during login')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      setError(message || 'Something went wrong during login')
       throw err
     } finally {
       setIsLoading(false)
@@ -102,8 +100,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(receivedUser)
       localStorage.setItem('cafeverse_auth_token', receivedToken)
       localStorage.setItem('cafeverse_auth_user', JSON.stringify(receivedUser))
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong during registration')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      setError(message || 'Something went wrong during registration')
       throw err
     } finally {
       setIsLoading(false)
