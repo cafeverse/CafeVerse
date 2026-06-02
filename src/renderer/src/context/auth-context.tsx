@@ -1,18 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState } from 'react'
-
-export interface User {
-  id: number
-  username: string
-  email: string
-  createdAt: string
-  updatedAt: string
-}
-
-interface AuthResponse {
-  token: string
-  user: User
-}
+import type { User, AuthResponse } from '@/types'
 
 interface AuthContextType {
   token: string | null

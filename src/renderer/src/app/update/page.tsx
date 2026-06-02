@@ -9,7 +9,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
-import { AppContextType } from '@/app/layout'
+import type { AppContextType } from '@/types'
 
 export default function UpdatePage(): React.JSX.Element {
   const {

@@ -1,3 +1,10 @@
+import type React from 'react'
+import type { cleanReleaseNotes } from '@/lib/utils'
+
+// ---------------------------------------------------------------------------
+// Media types
+// ---------------------------------------------------------------------------
+
 export interface CastMember {
   name: string
   character: string
@@ -61,6 +68,11 @@ export interface MediaItem {
   activeEpisode?: number
 }
 
+// ---------------------------------------------------------------------------
+// API utility types
+// ---------------------------------------------------------------------------
+
+/** Pagination metadata returned by list endpoints */
 export interface MetaPagination {
   currentPage: number
   itemCount: number
@@ -69,6 +81,7 @@ export interface MetaPagination {
   totalPages: number
 }
 
+/** Shape of the /health endpoint response */
 export interface HealthStatus {
   status: string
   timestamp: string
@@ -83,4 +96,46 @@ export interface HealthStatus {
       message: string
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Auth types
+// ---------------------------------------------------------------------------
+
+export interface User {
+  id: number
+  username: string
+  email: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AuthResponse {
+  token: string
+  user: User
+}
+
+// ---------------------------------------------------------------------------
+// App-wide outlet context type (shared between layout and child pages)
+// ---------------------------------------------------------------------------
+
+export interface AppContextType {
+  watchlist: MediaItem[]
+  setWatchlist: React.Dispatch<React.SetStateAction<MediaItem[]>>
+  getImageUrl: (path?: string) => string
+  getSlug: (title?: string) => string
+  toggleWatchlist: (item: MediaItem) => void
+  isItemInWatchlist: (item: MediaItem) => boolean
+  API_BASE_URL: string
+  updateInfo: { version: string; releaseNotes?: string } | null
+  downloading: boolean
+  downloadProgress: number
+  downloaded: boolean
+  updaterError: string | null
+  currentVersion: string
+  cleanReleaseNotes: typeof cleanReleaseNotes
+  watchHistory: MediaItem[]
+  addToWatchHistory: (item: MediaItem, season?: number, episode?: number) => void
+  removeFromWatchHistory: (itemId: number, contentType: string) => void
+  clearWatchHistory: () => void
 }

@@ -8,30 +8,23 @@ import {
   Play,
   Plus,
   Check,
-  Database,
   Clock,
   Sparkles,
-  ChevronLeft,
-  ChevronRight,
   Info,
   X,
-  Import,
-  RefreshCw,
   AlertTriangle,
   Flame,
   PlayCircle,
   HelpCircle,
-  Bookmark,
-  FolderOpen
+  Bookmark
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { MediaItem, SeasonMeta, Episode } from '@/types'
+import MediaRow from '@/components/media-row'
 
 const apiBaseUrl = 'https://cafeverce-api.vercel.app/'
 
@@ -97,17 +90,6 @@ export default function DashboardPage(): React.JSX.Element {
   const [playerDuration] = useState(7200) // 2 hours default in seconds
   const [playTime, setPlayTime] = useState(0)
   const [playEpisode, setPlayEpisode] = useState<Episode | null>(null)
-
-  // 6. Admin Media Importer Panel
-  const [showImporter, setShowImporter] = useState(false)
-  const [importImdbId, setImportImdbId] = useState('')
-  const [importContentType, setImportContentType] = useState<'movie' | 'tv'>('movie')
-  const [importCollectionId, setImportCollectionId] = useState('')
-  const [importing, setImporting] = useState(false)
-  const [importMessage, setImportMessage] = useState<{
-    type: 'success' | 'error'
-    text: string
-  } | null>(null)
 
   // Interval reference for featured media auto-play
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
@@ -498,67 +480,6 @@ export default function DashboardPage(): React.JSX.Element {
     return `${h > 0 ? `${h}:` : ''}${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
   }
 
-  // ==========================================
-  // ADMIN MEDIA IMPORT TRIGGER
-  // ==========================================
-  const triggerMediaImport = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault()
-    if (!importImdbId.trim() && !importCollectionId.trim()) {
-      setImportMessage({ type: 'error', text: 'Please enter an IMDb ID or a TMDB Collection ID.' })
-      return
-    }
-
-    setImporting(true)
-    setImportMessage(null)
-
-    const cleanBase = apiBaseUrl.replace(/\/$/, '')
-
-    try {
-      let response
-      if (importCollectionId.trim()) {
-        // Collection Import
-        response = await fetch(`${cleanBase}/media/import`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ collectionId: parseInt(importCollectionId.trim()) })
-        })
-      } else {
-        // Single Title Import
-        response = await fetch(`${cleanBase}/media/import`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            imdbId: importImdbId.trim(),
-            contentType: importContentType
-          })
-        })
-      }
-
-      const data = await response.json()
-
-      if (response.ok) {
-        setImportMessage({
-          type: 'success',
-          text: data.message || 'Media successfully imported into your backend database!'
-        })
-        setImportImdbId('')
-        setImportCollectionId('')
-        // Refresh local dashboard data
-        loadDashboardData()
-      } else {
-        throw new Error(data.error || 'Import failed. Check ID validity or server logs.')
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      setImportMessage({
-        type: 'error',
-        text: msg || 'Network error connecting to backend importer.'
-      })
-    } finally {
-      setImporting(false)
-    }
-  }
-
   // Active Spotlit Item
   const activeSpotlight = featuredMedia[featuredIndex]
 
@@ -585,15 +506,6 @@ export default function DashboardPage(): React.JSX.Element {
             </button>
           )}
         </div>
-
-        {/* Dynamic importer toggler */}
-        <button
-          onClick={() => setShowImporter(!showImporter)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-[11px] font-black cursor-pointer transition-all duration-200 ${showImporter ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/10 hover:bg-muted/40 border-border/40 text-muted-foreground/80 hover:text-white'}`}
-        >
-          <Import className="size-3.5" />
-          <span>Admin Importer</span>
-        </button>
       </section>
 
       {/* 2. LIVE SEARCH RESULTS OVERLAY PANEL */}
@@ -630,12 +542,9 @@ export default function DashboardPage(): React.JSX.Element {
           ) : searchResults.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 bg-muted/10 border border-border/20 rounded-2xl text-center">
               <AlertTriangle className="size-10 text-amber-500/60 mb-3 animate-bounce" />
-              <p className="text-sm font-bold text-white mb-1">
-                No matches found in your backend database.
-              </p>
+              <p className="text-sm font-bold text-white mb-1">No matches found.</p>
               <p className="text-xs text-muted-foreground/60 max-w-sm">
-                Try searching a different title, or use our **Admin Importer** tool above to index
-                it from TMDB/IMDb in seconds!
+                Try searching for a different title, or check back later once new content is added.
               </p>
             </div>
           ) : (
@@ -701,138 +610,6 @@ export default function DashboardPage(): React.JSX.Element {
         </section>
       )}
 
-      {/* 3. COLLAPSIBLE ADMIN MEDIA IMPORTER PANEL */}
-      {showImporter && (
-        <section className="px-8 mt-4 animate-in slide-in-from-top-4 duration-300">
-          <div className="bg-[#12100f] border border-border/40 p-6 rounded-2xl shadow-xl flex flex-col md:flex-row gap-8 items-start relative overflow-hidden">
-            <div className="absolute -top-12 -right-12 size-36 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
-
-            <div className="flex-1 space-y-2.5">
-              <h3 className="text-md font-black tracking-tight text-white flex items-center gap-2">
-                <Database className="size-5 text-primary" />
-                <span>Go-Backend Content Pipeline Importer</span>
-              </h3>
-              <p className="text-xs text-muted-foreground/75 max-w-lg leading-relaxed">
-                Connect dynamically to the **TMDB &amp; IMDb index engine** recreated in your
-                backend. Entering an ID triggers immediate server-side fetch, indexing metadata,
-                generating seasons, and caching structural files.
-              </p>
-              <div className="flex flex-wrap gap-4 pt-1.5">
-                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                  <Badge className="bg-muted text-muted-foreground border-border/40 font-bold px-1 rounded">
-                    IMDb Sample
-                  </Badge>
-                  <span>Use `tt0944947` for Game of Thrones</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                  <Badge className="bg-muted text-muted-foreground border-border/40 font-bold px-1 rounded">
-                    Collection Sample
-                  </Badge>
-                  <span>Use `10` for Star Wars</span>
-                </div>
-              </div>
-            </div>
-
-            <form
-              onSubmit={triggerMediaImport}
-              className="w-full md:w-96 p-4 bg-muted/10 border border-border/30 rounded-xl space-y-4 shrink-0"
-            >
-              <div className="space-y-3">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-black block">
-                  Select Import Mode
-                </span>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImportCollectionId('')
-                      setImportImdbId('tt')
-                    }}
-                    className={`py-1.5 rounded-lg text-[10px] font-black transition-all cursor-pointer ${!importCollectionId ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-muted/40 text-muted-foreground hover:bg-muted hover:text-white border border-transparent'}`}
-                  >
-                    Single IMDb ID
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImportImdbId('')
-                      setImportCollectionId('10')
-                    }}
-                    className={`py-1.5 rounded-lg text-[10px] font-black transition-all cursor-pointer ${importCollectionId ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-muted/40 text-muted-foreground hover:bg-muted hover:text-white border border-transparent'}`}
-                  >
-                    TMDB Collection ID
-                  </button>
-                </div>
-
-                {!importCollectionId ? (
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-white/80 block">
-                      IMDb Title ID:
-                    </label>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="tt0944947"
-                        value={importImdbId}
-                        onChange={(e) => setImportImdbId(e.target.value)}
-                        className="h-8.5 text-xs rounded-lg bg-background border-border/40"
-                      />
-                      <select
-                        value={importContentType}
-                        onChange={(e) => setImportContentType(e.target.value as 'movie' | 'tv')}
-                        className="h-8.5 bg-background border border-border/40 text-white rounded-lg px-2 text-xs font-bold outline-hidden focus:border-primary cursor-pointer shrink-0"
-                      >
-                        <option value="movie">Movie</option>
-                        <option value="tv">TV Show</option>
-                      </select>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2 animate-in fade-in duration-200">
-                    <label className="text-[10px] font-black text-white/80 block">
-                      TMDB Collection ID:
-                    </label>
-                    <Input
-                      placeholder="e.g. 10 (Star Wars Series)"
-                      value={importCollectionId}
-                      onChange={(e) => setImportCollectionId(e.target.value)}
-                      className="h-8.5 text-xs rounded-lg bg-background border-border/40"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {importMessage && (
-                <div
-                  className={`p-2.5 rounded-lg text-[10px] font-bold border ${importMessage.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}
-                >
-                  {importMessage.text}
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                disabled={importing}
-                className="w-full h-8.5 bg-primary text-primary-foreground font-black tracking-tight text-xs cursor-pointer rounded-lg flex items-center justify-center gap-1.5 hover:bg-primary/90 transition-colors"
-              >
-                {importing ? (
-                  <>
-                    <RefreshCw className="size-3.5 animate-spin" />
-                    <span>Synchronizing backend...</span>
-                  </>
-                ) : (
-                  <>
-                    <Database className="size-3.5" />
-                    <span>Trigger Import Sequence</span>
-                  </>
-                )}
-              </Button>
-            </form>
-          </div>
-          <Separator className="bg-border/30 my-8" />
-        </section>
-      )}
-
       {/* 4. VISUALLY STUNNING SPOTLIGHT FEATURED HERO BANNER */}
       <section className="px-8 mt-2 select-none relative z-10 shrink-0">
         {loading.featured ? (
@@ -841,14 +618,14 @@ export default function DashboardPage(): React.JSX.Element {
           <div className="w-full h-96 border border-dashed border-border/30 rounded-3xl flex flex-col justify-center items-center p-8 bg-muted/10">
             <HelpCircle className="size-12 text-muted-foreground/30 mb-3" />
             <p className="text-sm font-bold text-white/60 mb-2">
-              Failed to populate Spotlight Banner.
+              We couldn&apos;t load the featured spotlight.
             </p>
             <Button
               size="sm"
               onClick={loadDashboardData}
               className="bg-primary cursor-pointer text-xs rounded-xl font-bold"
             >
-              Retry Connection
+              Try Again
             </Button>
           </div>
         ) : (
@@ -868,7 +645,7 @@ export default function DashboardPage(): React.JSX.Element {
               <div className="flex flex-wrap items-center gap-2">
                 <Badge className="bg-primary/20 text-primary border border-primary/20 font-black text-[9px] uppercase tracking-wider rounded-md px-2 py-0.5 animate-pulse">
                   <Flame className="size-3 text-primary mr-1 fill-primary" />
-                  <span>Spotlight Highlight</span>
+                  <span>Featured Title</span>
                 </Badge>
 
                 <Badge className="bg-black/60 border border-white/10 text-[9px] font-black text-amber-400 gap-1 rounded-md px-1.5 py-0.5">
@@ -894,7 +671,7 @@ export default function DashboardPage(): React.JSX.Element {
 
               <p className="text-xs text-muted-foreground/80 leading-relaxed font-bold tracking-tight line-clamp-3 md:line-clamp-4 max-w-lg">
                 {activeSpotlight.overview ||
-                  'Explore details, synopsis, seasons, and episodes of this featured title indexing metadata dynamically from community API servers.'}
+                  'Discover the synopsis, seasons, and episodes for this featured title.'}
               </p>
 
               {activeSpotlight.genres && activeSpotlight.genres.length > 0 && (
@@ -917,7 +694,7 @@ export default function DashboardPage(): React.JSX.Element {
                   className="bg-primary text-primary-foreground font-black px-6 py-4.5 rounded-xl cursor-pointer hover:bg-primary/90 hover:scale-102 hover:shadow-lg hover:shadow-primary/20 transition-all flex items-center gap-2 text-xs"
                 >
                   <Play className="size-4.5 fill-current" />
-                  <span>Play Spotlight</span>
+                  <span>Watch Preview</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -976,71 +753,25 @@ export default function DashboardPage(): React.JSX.Element {
       <section className="px-8 mt-10 space-y-12 flex-1">
         {/* ROW 1: MY WATCHLIST (Condition-based horizontal scroll) */}
         {watchlist.length > 0 && (
-          <div className="space-y-4 animate-in fade-in duration-300">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-black tracking-[0.2em] text-white/55 uppercase select-none flex items-center gap-2">
-                <Bookmark className="size-4 text-primary" />
-                <span>My Saved Watchlist</span>
-              </h3>
-            </div>
-
-            <div className="relative">
-              <ScrollArea className="w-full whitespace-nowrap rounded-2xl pb-4">
-                <div className="flex gap-4">
-                  {watchlist.map((item) => (
-                    <div
-                      key={`watchlist-${item.id}`}
-                      onClick={() => openMediaDetails(item)}
-                      className="inline-block w-44 shrink-0 cursor-pointer group bg-muted/20 border border-border/40 hover:border-primary/20 rounded-xl overflow-hidden shadow-2xs hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1"
-                    >
-                      <div className="aspect-2/3 w-full bg-muted relative overflow-hidden">
-                        {getPoster(item) ? (
-                          <img
-                            src={getPoster(item)}
-                            alt={item.title || item.name}
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="h-full w-full bg-linear-to-br from-muted/50 to-background flex items-center justify-center p-3 text-center">
-                            <span className="text-[10px] font-black text-muted-foreground/75 truncate w-full">
-                              {item.title || item.name}
-                            </span>
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
-                          <PlayCircle className="size-10 text-primary drop-shadow-md" />
-                        </div>
-                        <Badge className="absolute top-2 right-2 bg-black/70 border border-white/10 text-[8px] font-black text-amber-400 gap-0.5 rounded-md px-1.5 py-0.5">
-                          <Star className="size-2 fill-amber-400 stroke-none" />
-                          <span>{item.voteAverage?.toFixed(1) || '0.0'}</span>
-                        </Badge>
-                      </div>
-                      <div className="p-2.5">
-                        <h4 className="font-extrabold text-[11px] tracking-tight text-white leading-tight truncate group-hover:text-primary transition-colors">
-                          {item.title || item.name}
-                        </h4>
-                        <span className="text-[8px] text-muted-foreground/50 mt-0.5 block uppercase tracking-widest font-black">
-                          {item.contentType === 'movie' ? 'Movie' : 'TV Show'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-          </div>
+          <MediaRow
+            title="My Watchlist"
+            icon={Bookmark}
+            data={watchlist}
+            onItemClick={openMediaDetails}
+            getPosterUrl={getPoster}
+          />
         )}
 
         {/* Dynamic media row template */}
         {(
           [
             {
-              title: 'Trending Movies Catalog',
+              title: 'Trending Movies',
               data: trendingMovies,
               key: 'trendingMovies',
               icon: Film
             },
-            { title: 'Trending TV Shows Catalog', data: trendingTv, key: 'trendingTv', icon: Tv },
+            { title: 'Trending TV Shows', data: trendingTv, key: 'trendingTv', icon: Tv },
             {
               title: 'Recently Added Movies',
               data: recentMovies,
@@ -1050,93 +781,16 @@ export default function DashboardPage(): React.JSX.Element {
             { title: 'Recently Added TV Shows', data: recentTv, key: 'recentTv', icon: Sparkles }
           ] as const
         ).map((row) => (
-          <div key={row.key} className="space-y-4">
-            <div className="flex items-center justify-between border-b border-border/20 pb-2">
-              <h3 className="text-sm font-black tracking-[0.2em] text-white/55 uppercase select-none flex items-center gap-2">
-                <row.icon className="size-4.5 text-primary" />
-                <span>{row.title}</span>
-              </h3>
-
-              {row.data.length > 5 && (
-                <div className="flex gap-1.5">
-                  <button className="p-1 rounded-lg bg-muted/40 hover:bg-muted border border-border/30 text-muted-foreground hover:text-white cursor-pointer transition-colors">
-                    <ChevronLeft className="size-3.5" />
-                  </button>
-                  <button className="p-1 rounded-lg bg-muted/40 hover:bg-muted border border-border/30 text-muted-foreground hover:text-white cursor-pointer transition-colors">
-                    <ChevronRight className="size-3.5" />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {loading[row.key] ? (
-              <div className="flex gap-4 overflow-hidden">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="w-44 shrink-0 space-y-2">
-                    <Skeleton className="aspect-2/3 w-full rounded-xl bg-muted/20" />
-                    <Skeleton className="h-3 w-3/4 bg-muted/20" />
-                    <Skeleton className="h-2 w-1/2 bg-muted/20" />
-                  </div>
-                ))}
-              </div>
-            ) : errors[row.key] || row.data.length === 0 ? (
-              <div className="py-12 border border-dashed border-border/20 rounded-2xl flex flex-col justify-center items-center text-center p-6 bg-muted/5">
-                <FolderOpen className="size-8 text-muted-foreground/30 mb-2 animate-pulse" />
-                <p className="text-xs font-bold text-muted-foreground/60">
-                  No indexed metadata inside your local Go database yet.
-                </p>
-                <p className="text-[10px] text-muted-foreground/45 mt-0.5">
-                  Try triggering the **Admin Importer** tool above to ingest catalogs instantly.
-                </p>
-              </div>
-            ) : (
-              <div className="relative">
-                <ScrollArea className="w-full whitespace-nowrap rounded-2xl pb-4">
-                  <div className="flex gap-4">
-                    {row.data.map((item) => (
-                      <div
-                        key={`${row.key}-${item.id}`}
-                        onClick={() => openMediaDetails(item)}
-                        className="inline-block w-44 shrink-0 cursor-pointer group bg-muted/20 border border-border/40 hover:border-primary/20 rounded-xl overflow-hidden shadow-2xs hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1"
-                      >
-                        <div className="aspect-2/3 w-full bg-muted relative overflow-hidden">
-                          {getPoster(item) ? (
-                            <img
-                              src={getPoster(item)}
-                              alt={item.title || item.name}
-                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="h-full w-full bg-linear-to-br from-muted/50 to-background flex items-center justify-center p-3 text-center">
-                              <span className="text-[10px] font-black text-muted-foreground/75 truncate w-full">
-                                {item.title || item.name}
-                              </span>
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
-                            <PlayCircle className="size-10 text-primary drop-shadow-md" />
-                          </div>
-                          <Badge className="absolute top-2 right-2 bg-black/70 border border-white/10 text-[8px] font-black text-amber-400 gap-0.5 rounded-md px-1.5 py-0.5">
-                            <Star className="size-2 fill-amber-400 stroke-none" />
-                            <span>{item.voteAverage?.toFixed(1) || '0.0'}</span>
-                          </Badge>
-                        </div>
-                        <div className="p-2.5">
-                          <h4 className="font-extrabold text-[11px] tracking-tight text-white leading-tight truncate group-hover:text-primary transition-colors">
-                            {item.title || item.name}
-                          </h4>
-                          <span className="text-[8px] text-muted-foreground/50 mt-0.5 block uppercase tracking-widest font-black">
-                            {item.contentType === 'movie' ? 'Movie' : 'TV Show'}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
-            )}
-          </div>
+          <MediaRow
+            key={row.key}
+            title={row.title}
+            icon={row.icon}
+            data={row.data}
+            isLoading={loading[row.key]}
+            error={errors[row.key]}
+            onItemClick={openMediaDetails}
+            getPosterUrl={getPoster}
+          />
         ))}
       </section>
 
@@ -1168,10 +822,10 @@ export default function DashboardPage(): React.JSX.Element {
                 )}
               </div>
 
-              {/* Media specifications catalog */}
+              {/* Media specifications */}
               <div className="mt-6 space-y-4">
                 <div className="flex items-center justify-between text-xs border-b border-border/20 pb-2">
-                  <span className="text-muted-foreground font-bold">Category</span>
+                  <span className="text-muted-foreground font-bold">Type</span>
                   <Badge className="bg-primary text-primary-foreground border-none font-black text-[9px] uppercase">
                     {activeMedia.contentType === 'movie' ? 'Movie' : 'TV Show'}
                   </Badge>
@@ -1215,10 +869,11 @@ export default function DashboardPage(): React.JSX.Element {
                 )}
 
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground font-bold">TMDB Score</span>
+                  <span className="text-muted-foreground font-bold">Viewer Rating</span>
                   <span className="text-amber-400 font-extrabold flex items-center gap-1">
                     <Star className="size-3.5 fill-amber-400 stroke-none" />
-                    {activeMedia.voteAverage?.toFixed(1) || '0.0'} ({activeMedia.voteCount || 0})
+                    {activeMedia.voteAverage?.toFixed(1) || '0.0'} ({activeMedia.voteCount || 0}{' '}
+                    reviews)
                   </span>
                 </div>
               </div>
@@ -1280,7 +935,7 @@ export default function DashboardPage(): React.JSX.Element {
                         Synopsis
                       </h4>
                       <p className="text-xs text-muted-foreground/85 leading-relaxed font-bold tracking-tight">
-                        {activeMedia.overview || 'Synopsis not available for this index record.'}
+                        {activeMedia.overview || 'No description is available for this title yet.'}
                       </p>
                     </div>
 
@@ -1315,7 +970,7 @@ export default function DashboardPage(): React.JSX.Element {
                         className="bg-primary text-primary-foreground font-black px-6 py-4.5 rounded-xl cursor-pointer hover:bg-primary/95 flex items-center gap-2 text-xs hover:scale-102 hover:shadow-lg hover:shadow-primary/20 transition-all"
                       >
                         <Play className="size-4.5 fill-current animate-pulse" />
-                        <span>Instant Play Stream</span>
+                        <span>Watch Preview</span>
                       </Button>
 
                       <Button
@@ -1351,7 +1006,7 @@ export default function DashboardPage(): React.JSX.Element {
                         <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-black block">
                           Browse Series Seasons
                         </span>
-                        <h4 className="text-sm font-black text-white">Select Season details</h4>
+                        <h4 className="text-sm font-black text-white">Choose a season</h4>
                       </div>
 
                       {loadingSeasons ? (
@@ -1387,7 +1042,7 @@ export default function DashboardPage(): React.JSX.Element {
                       </div>
                     ) : episodes.length === 0 ? (
                       <div className="py-12 text-center text-xs text-muted-foreground/60">
-                        No episodes could be generated for this season in the database.
+                        We couldn&apos;t find any episodes for this season.
                       </div>
                     ) : (
                       <div className="space-y-3.5">
@@ -1433,14 +1088,14 @@ export default function DashboardPage(): React.JSX.Element {
                                 )}
                               </div>
                               <p className="text-[10.5px] leading-relaxed text-muted-foreground/75 font-bold tracking-tight">
-                                {ep.overview || 'Overview not indexed for this season episode.'}
+                                {ep.overview || 'No description is available for this episode yet.'}
                               </p>
                               <button
                                 onClick={() => startPlayback(ep)}
                                 className="text-[9.5px] font-black tracking-wider uppercase text-primary hover:text-white flex items-center gap-1 cursor-pointer transition-colors mt-2"
                               >
                                 <Play className="size-2.5 fill-current" />
-                                <span>Simulate Episode Stream</span>
+                                <span>Watch Episode</span>
                               </button>
                             </div>
                           </div>
@@ -1473,7 +1128,7 @@ export default function DashboardPage(): React.JSX.Element {
 
               <div className="text-center space-y-1.5">
                 <Badge className="bg-primary/20 text-primary border border-primary/20 text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full">
-                  Live Streaming Simulation
+                  Streaming Preview
                 </Badge>
 
                 <h3 className="text-lg md:text-2xl font-black text-white italic tracking-tight uppercase leading-none">
@@ -1489,8 +1144,7 @@ export default function DashboardPage(): React.JSX.Element {
               </div>
 
               <p className="text-[10px] text-muted-foreground/60 max-w-sm text-center leading-relaxed">
-                Mocking standard HLS/DASH media streaming pipeline. Widevine DRM module loaded in
-                background successfully.
+                Connecting securely and buffering player settings. Please wait...
               </p>
             </div>
 
@@ -1524,10 +1178,10 @@ export default function DashboardPage(): React.JSX.Element {
 
                   <div className="flex flex-col">
                     <span className="text-[8px] uppercase tracking-wider text-muted-foreground font-black">
-                      Video Audio Tier
+                      Quality
                     </span>
                     <span className="text-[10px] font-black text-emerald-400">
-                      1080P HD / Stereo DRM
+                      1080p Full HD • Stereo
                     </span>
                   </div>
                 </div>

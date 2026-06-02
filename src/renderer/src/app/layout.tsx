@@ -2,33 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Outlet } from 'react-router-dom'
 import Navbar from '@/components/navbar'
 import Titlebar from '@/components/titlebar'
-import { MediaItem } from '@/types'
 import { cleanReleaseNotes } from '@/lib/utils'
 import { AuthProvider } from '@/context/auth-context'
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/original'
 const API_BASE_URL = 'https://cafeverce-api.vercel.app/'
 
-export interface AppContextType {
-  watchlist: MediaItem[]
-  setWatchlist: React.Dispatch<React.SetStateAction<MediaItem[]>>
-  getImageUrl: (path?: string) => string
-  getSlug: (title?: string) => string
-  toggleWatchlist: (item: MediaItem) => void
-  isItemInWatchlist: (item: MediaItem) => boolean
-  API_BASE_URL: string
-  updateInfo: { version: string; releaseNotes?: string } | null
-  downloading: boolean
-  downloadProgress: number
-  downloaded: boolean
-  updaterError: string | null
-  currentVersion: string
-  cleanReleaseNotes: (rawNotes?: string) => string
-  watchHistory: MediaItem[]
-  addToWatchHistory: (item: MediaItem, season?: number, episode?: number) => void
-  removeFromWatchHistory: (itemId: number, contentType: string) => void
-  clearWatchHistory: () => void
-}
 
 export default function RootLayout(): React.JSX.Element {
   // Auto Updater State
