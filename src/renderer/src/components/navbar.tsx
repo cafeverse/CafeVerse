@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '@/context/auth-context'
 
 import {
-  Layers,
   Film,
   Tv,
   Menu,
@@ -13,7 +12,8 @@ import {
   Settings,
   LogOut,
   Heart,
-  History
+  History,
+  Home
 } from 'lucide-react'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
@@ -164,13 +164,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ setOpen }) => (
           </span>
         </div>
         <div className="space-y-0.5">
-          <MobileNavItem
-            to="/"
-            icon={Layers}
-            label="Dashboard"
-            onClick={() => setOpen(false)}
-            end
-          />
+          <MobileNavItem to="/" icon={Home} label="Home" onClick={() => setOpen(false)} end />
           <MobileNavItem to="/movies" icon={Film} label="Movies" onClick={() => setOpen(false)} />
           <MobileNavItem to="/tvshows" icon={Tv} label="TV Shows" onClick={() => setOpen(false)} />
         </div>
@@ -235,7 +229,7 @@ export const Navbar: React.FC<NavbarProps> = ({ updateAvailable }) => {
       <div className="flex items-center gap-6 h-full">
         {/* Desktop Navigation Menu */}
         <nav className="hidden md:flex items-center gap-1.5 h-full">
-          <DesktopNavItem to="/" icon={Layers} label="Dashboard" end />
+          <DesktopNavItem to="/" icon={Home} label="Home" end />
           <DesktopNavItem to="/movies" icon={Film} label="Movies" />
           <DesktopNavItem to="/tvshows" icon={Tv} label="TV Shows" />
           <DesktopNavItem to="/history" icon={History} label="History" />
