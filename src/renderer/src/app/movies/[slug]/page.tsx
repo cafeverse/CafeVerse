@@ -167,7 +167,6 @@ export default function MovieSlugPage(): React.JSX.Element {
   const backdrop = getBackdrop(movie)
   const year = movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : null
   const runtime = movie.runtime ? formatRuntime(movie.runtime) : null
-  const primaryGenre = movie.genres?.[0]?.toUpperCase()
 
   return (
     <div className="min-h-full bg-[#09090b] text-white font-sans antialiased selection:bg-white/20">
@@ -202,12 +201,26 @@ export default function MovieSlugPage(): React.JSX.Element {
             {movie.title || movie.name}
           </h1>
 
-          <div className="flex items-center gap-3 md:gap-4 mt-6 text-[11px] md:text-xs font-bold tracking-widest text-white/80 drop-shadow-md uppercase">
-            {year && <span>{year}</span>}
+          <div className="flex flex-wrap items-center gap-2 mt-6">
+            {year && (
+              <span className="text-[11px] md:text-xs font-bold tracking-widest text-white/80 drop-shadow-md uppercase">
+                {year}
+              </span>
+            )}
             {year && runtime && <span className="text-white/40">•</span>}
-            {runtime && <span>{runtime}</span>}
-            {runtime && primaryGenre && <span className="text-white/40">•</span>}
-            {primaryGenre && <span>{primaryGenre}</span>}
+            {runtime && (
+              <span className="text-[11px] md:text-xs font-bold tracking-widest text-white/80 drop-shadow-md uppercase mr-2">
+                {runtime}
+              </span>
+            )}
+            {movie.genres?.map((g) => (
+              <span
+                key={g}
+                className="px-2 py-0.5 bg-white/10 border border-white/10 rounded-md text-[9px] md:text-[10px] font-black text-white uppercase tracking-wider backdrop-blur-xs"
+              >
+                {g}
+              </span>
+            ))}
           </div>
         </div>
       </div>

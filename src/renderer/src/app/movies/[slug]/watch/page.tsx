@@ -134,7 +134,7 @@ export default function MovieWatchPage(): React.JSX.Element {
   if (loading) {
     return (
       <div className="min-h-full bg-background/95 animate-pulse flex flex-col items-center justify-center p-6 md:p-12 space-y-6">
-        <div className="w-full max-w-5xl space-y-4">
+        <div className="w-full max-w-7xl space-y-4">
           <Skeleton className="h-10 w-1/4 bg-white/5 rounded-xl" />
           <Skeleton className="w-full aspect-video rounded-3xl bg-white/5" />
           <Skeleton className="h-8 w-1/3 bg-white/5 rounded-xl" />
@@ -172,7 +172,6 @@ export default function MovieWatchPage(): React.JSX.Element {
   const backdrop = getBackdrop(movie)
   const poster = getPoster(movie)
   const year = movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : null
-  const primaryGenre = movie.genres?.[0]?.toUpperCase()
 
   // ─── Interesting Calculations ───────────────────────────────────────────────
 
@@ -183,9 +182,9 @@ export default function MovieWatchPage(): React.JSX.Element {
   }
 
   // 2. Estimated stream size (at standard bitrates)
-  // ~1.6 GB per hour for typical 1080p H.264 video
+  // ~1 GB per hour for typical 1080p H.264 video
   const estimateStreamSize = (runtimeMinutes: number): string => {
-    const sizeGb = (runtimeMinutes / 60) * 1.6
+    const sizeGb = (runtimeMinutes / 60) * 1
     return `${sizeGb.toFixed(2)} GB`
   }
 
@@ -217,7 +216,7 @@ export default function MovieWatchPage(): React.JSX.Element {
         />
       )}
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 pt-6 space-y-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 pt-6 space-y-8">
         {/* Navigation Row */}
         <div className="flex items-center justify-between gap-4">
           <button
@@ -230,7 +229,7 @@ export default function MovieWatchPage(): React.JSX.Element {
         </div>
 
         {/* Media Player Component */}
-        <div className="w-full aspect-video rounded-3xl overflow-hidden border border-white/5 bg-black">
+        <div className="w-full aspect-video overflow-hidden border border-white/5 bg-black">
           <MediaPlayer item={movie} />
         </div>
 
@@ -277,14 +276,24 @@ export default function MovieWatchPage(): React.JSX.Element {
 
           {/* Col 2: Title, Tagline, Storyline (5 cols) */}
           <div className="md:col-span-5 space-y-4">
-            <div className="space-y-1">
+            <div className="space-y-2">
               <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight">
                 {movie.title || movie.name}
               </h1>
-              <div className="flex items-center gap-3 text-[10px] font-bold tracking-widest text-white/50 uppercase">
-                {year && <span>{year}</span>}
-                {year && primaryGenre && <span className="text-white/30">•</span>}
-                {primaryGenre && <span>{primaryGenre}</span>}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {year && (
+                  <span className="text-[10px] font-extrabold tracking-widest text-white/50 uppercase mr-1">
+                    {year}
+                  </span>
+                )}
+                {movie.genres?.map((g) => (
+                  <span
+                    key={g}
+                    className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[8.5px] font-black text-white/60 uppercase tracking-wider"
+                  >
+                    {g}
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -314,7 +323,7 @@ export default function MovieWatchPage(): React.JSX.Element {
               {movie.runtime && (
                 <>
                   {/* Finish time */}
-                  <div className="bg-[#2e2e2e]/30 border border-white/5 p-4 rounded-xl flex items-start gap-3">
+                  <div className="bg-[#2e2e2e]/30 border border-white/5 p-4 flex items-start gap-3">
                     <Clock className="size-4 text-primary shrink-0 mt-0.5" />
                     <div className="space-y-0.5">
                       <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest block">
@@ -327,7 +336,7 @@ export default function MovieWatchPage(): React.JSX.Element {
                   </div>
 
                   {/* Stream Size */}
-                  <div className="bg-[#2e2e2e]/30 border border-white/5 p-4 rounded-xl flex items-start gap-3">
+                  <div className="bg-[#2e2e2e]/30 border border-white/5 p-4 flex items-start gap-3">
                     <HardDrive className="size-4 text-primary shrink-0 mt-0.5" />
                     <div className="space-y-0.5">
                       <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest block">
@@ -342,7 +351,7 @@ export default function MovieWatchPage(): React.JSX.Element {
               )}
 
               {/* Popularity */}
-              <div className="bg-[#2e2e2e]/30 border border-white/5 p-4 rounded-xl flex items-start gap-3">
+              <div className="bg-[#2e2e2e]/30 border border-white/5 p-4 flex items-start gap-3">
                 <TrendingUp className="size-4 text-primary shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
                   <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest block">
@@ -356,7 +365,7 @@ export default function MovieWatchPage(): React.JSX.Element {
 
               {/* ROI */}
               {roiInfo ? (
-                <div className="bg-[#2e2e2e]/30 border border-white/5 p-4 rounded-xl flex items-start gap-3">
+                <div className="bg-[#2e2e2e]/30 border border-white/5 p-4 flex items-start gap-3">
                   <DollarSign className="size-4 text-primary shrink-0 mt-0.5" />
                   <div className="space-y-0.5">
                     <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest block">
@@ -369,7 +378,7 @@ export default function MovieWatchPage(): React.JSX.Element {
                   </div>
                 </div>
               ) : (
-                <div className="bg-[#2e2e2e]/30 border border-white/5 p-4 rounded-xl flex items-start gap-3">
+                <div className="bg-[#2e2e2e]/30 border border-white/5 p-4 flex items-start gap-3">
                   <DollarSign className="size-4 text-primary shrink-0 mt-0.5" />
                   <div className="space-y-0.5">
                     <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest block">
