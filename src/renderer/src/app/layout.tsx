@@ -8,7 +8,6 @@ import { AuthProvider } from '@/context/auth-context'
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/original'
 const API_BASE_URL = 'https://cafeverce-api.vercel.app/'
 
-
 export default function RootLayout(): React.JSX.Element {
   // Auto Updater State
   const [updateInfo, setUpdateInfo] = useState<{ version: string; releaseNotes?: string } | null>(

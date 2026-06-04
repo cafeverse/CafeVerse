@@ -72,18 +72,26 @@ const resolvePagination = (res: unknown): MetaPagination | null => {
   if (res && typeof res === 'object') {
     const obj = res as Record<string, unknown>
     if (obj.meta && typeof obj.meta === 'object') return obj.meta as MetaPagination
-    if (obj.pagination && typeof obj.pagination === 'object') return obj.pagination as MetaPagination
+    if (obj.pagination && typeof obj.pagination === 'object')
+      return obj.pagination as MetaPagination
   }
   return null
 }
 
 /** Derive the navigation slug: prefer the API slug, fall back to id */
-const getSlug = (item: MediaItem): string =>
-  item.slug || String(item.id)
+const getSlug = (item: MediaItem): string => item.slug || String(item.id)
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function GenreChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }): React.JSX.Element {
+function GenreChip({
+  label,
+  active,
+  onClick
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}): React.JSX.Element {
   return (
     <button
       onClick={onClick}
@@ -98,7 +106,15 @@ function GenreChip({ label, active, onClick }: { label: string; active: boolean;
   )
 }
 
-function SortButton({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }): React.JSX.Element {
+function SortButton({
+  label,
+  active,
+  onClick
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}): React.JSX.Element {
   return (
     <button
       onClick={onClick}
@@ -132,7 +148,7 @@ function MovieCard({
       onClick={onNavigate}
       className="group relative cursor-pointer rounded-xl border border-border/30 hover:border-primary/25 bg-muted/10 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5"
     >
-      <div className="aspect-[2/3] w-full bg-muted relative overflow-hidden">
+      <div className="aspect-2/3 w-full bg-muted relative overflow-hidden">
         {poster ? (
           <img
             src={poster}
@@ -141,7 +157,7 @@ function MovieCard({
             loading="lazy"
           />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-muted/60 to-background flex flex-col items-center justify-center gap-2 p-3">
+          <div className="h-full w-full bg-linear-to-br from-muted/60 to-background flex flex-col items-center justify-center gap-2 p-3">
             <Film className="size-8 text-muted-foreground/20" />
             <span className="text-[9px] font-black text-muted-foreground/50 text-center leading-tight">
               {item.title || item.name}
@@ -183,7 +199,9 @@ function MovieCard({
           {item.genres?.length > 0 && (
             <>
               <span className="text-muted-foreground/25 text-[8px]">·</span>
-              <span className="text-[9px] text-muted-foreground/45 font-bold truncate">{item.genres[0]}</span>
+              <span className="text-[9px] text-muted-foreground/45 font-bold truncate">
+                {item.genres[0]}
+              </span>
             </>
           )}
         </div>
@@ -195,7 +213,7 @@ function MovieCard({
 function MovieCardSkeleton(): React.JSX.Element {
   return (
     <div className="rounded-xl border border-border/20 bg-muted/10 overflow-hidden">
-      <Skeleton className="aspect-[2/3] w-full bg-muted/20 rounded-none" />
+      <Skeleton className="aspect-2/3 w-full bg-muted/20 rounded-none" />
       <div className="p-2.5 space-y-1.5">
         <Skeleton className="h-3 w-3/4 bg-muted/20" />
         <Skeleton className="h-2 w-1/2 bg-muted/20" />
@@ -243,7 +261,8 @@ export default function MoviesPage(): React.JSX.Element {
   })
 
   const isInWatchlist = useCallback(
-    (item: MediaItem) => watchlist.some((w) => w.id === item.id && w.contentType === item.contentType),
+    (item: MediaItem) =>
+      watchlist.some((w) => w.id === item.id && w.contentType === item.contentType),
     [watchlist]
   )
 
@@ -290,7 +309,9 @@ export default function MoviesPage(): React.JSX.Element {
         setFeaturedIdx((p) => (p + 1) % featured.length)
       }, 7000)
     }
-    return () => { if (spotlightRef.current) clearInterval(spotlightRef.current) }
+    return () => {
+      if (spotlightRef.current) clearInterval(spotlightRef.current)
+    }
   }, [featured])
 
   const loadMovies = useCallback(async () => {
@@ -340,7 +361,12 @@ export default function MoviesPage(): React.JSX.Element {
     const t = setTimeout(async () => {
       setIsSearching(true)
       try {
-        const params = new URLSearchParams({ q: searchQuery, type: 'movie', page: '1', limit: '12' })
+        const params = new URLSearchParams({
+          q: searchQuery,
+          type: 'movie',
+          page: '1',
+          limit: '12'
+        })
         setSearchResults(resolveList(await fetchApi(`/search?${params}`)))
       } catch {
         setSearchResults([])
@@ -362,7 +388,6 @@ export default function MoviesPage(): React.JSX.Element {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-full bg-background text-foreground font-sans antialiased pb-20 select-none">
-
       {/* ── 1. Top bar: search + sort ──────────────────────────────────────── */}
       <div className="sticky top-0 z-30 px-6 py-3.5 backdrop-blur-xl bg-background/60 border-b border-border/30 flex items-center gap-3 flex-wrap">
         <div className="flex flex-1 min-w-48 max-w-sm items-center bg-muted/40 border border-border/40 rounded-full px-3 py-1 text-xs shadow-inner focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10 transition-all">
@@ -387,7 +412,9 @@ export default function MoviesPage(): React.JSX.Element {
 
         <div className="flex items-center gap-1.5 ml-auto flex-wrap">
           <SlidersHorizontal className="size-3.5 text-muted-foreground/40 shrink-0" />
-          <span className="text-[10px] text-muted-foreground/40 font-bold uppercase tracking-widest hidden sm:block">Sort:</span>
+          <span className="text-[10px] text-muted-foreground/40 font-bold uppercase tracking-widest hidden sm:block">
+            Sort:
+          </span>
           {SORT_OPTIONS.map((opt) => (
             <SortButton
               key={opt.label}
@@ -402,13 +429,13 @@ export default function MoviesPage(): React.JSX.Element {
       {/* ── 2. Featured spotlight ─────────────────────────────────────────── */}
       {!searchQuery && spotlight && (
         <section className="px-6 pt-6">
-          <div className="w-full h-[340px] rounded-2xl relative overflow-hidden group border border-border/20 shadow-2xl">
+          <div className="w-full h-85 rounded-2xl relative overflow-hidden group border border-border/20 shadow-2xl">
             <div
               className="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-100 group-hover:scale-[1.02]"
               style={{ backgroundImage: `url(${getBackdrop(spotlight)})` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/60 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-r from-background/95 via-background/60 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-background via-transparent to-transparent" />
             </div>
 
             <div className="absolute inset-y-0 left-0 w-full md:w-3/5 p-8 flex flex-col justify-center gap-4">
@@ -439,7 +466,10 @@ export default function MoviesPage(): React.JSX.Element {
               {spotlight.genres?.length > 0 && (
                 <div className="flex gap-1.5 flex-wrap">
                   {spotlight.genres.slice(0, 4).map((g) => (
-                    <Badge key={g} className="bg-white/5 hover:bg-white/10 border-none text-[9px] text-white/75 font-bold px-2 py-0.5 rounded-full cursor-pointer">
+                    <Badge
+                      key={g}
+                      className="bg-white/5 hover:bg-white/10 border-none text-[9px] text-white/75 font-bold px-2 py-0.5 rounded-full cursor-pointer"
+                    >
                       {g}
                     </Badge>
                   ))}
@@ -463,7 +493,15 @@ export default function MoviesPage(): React.JSX.Element {
                       : 'bg-white/5 border-white/10 hover:bg-white/10 text-white'
                   }`}
                 >
-                  {isInWatchlist(spotlight) ? <><Check className="size-4" /> Saved</> : <><Bookmark className="size-4" /> Save</>}
+                  {isInWatchlist(spotlight) ? (
+                    <>
+                      <Check className="size-4" /> Saved
+                    </>
+                  ) : (
+                    <>
+                      <Bookmark className="size-4" /> Save
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -473,7 +511,10 @@ export default function MoviesPage(): React.JSX.Element {
                 {featured.map((_, i) => (
                   <button
                     key={i}
-                    onClick={() => { setFeaturedIdx(i); if (spotlightRef.current) clearInterval(spotlightRef.current) }}
+                    onClick={() => {
+                      setFeaturedIdx(i)
+                      if (spotlightRef.current) clearInterval(spotlightRef.current)
+                    }}
                     className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${featuredIdx === i ? 'w-6 bg-primary' : 'w-1.5 bg-white/25 hover:bg-white/50'}`}
                   />
                 ))}
@@ -487,9 +528,18 @@ export default function MoviesPage(): React.JSX.Element {
       {!searchQuery && genres.length > 0 && (
         <section className="px-6 pt-5">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <GenreChip label="All" active={selectedGenre === null} onClick={() => setSelectedGenre(null)} />
+            <GenreChip
+              label="All"
+              active={selectedGenre === null}
+              onClick={() => setSelectedGenre(null)}
+            />
             {genres.map((g) => (
-              <GenreChip key={g} label={g} active={selectedGenre === g} onClick={() => setSelectedGenre(selectedGenre === g ? null : g)} />
+              <GenreChip
+                key={g}
+                label={g}
+                active={selectedGenre === g}
+                onClick={() => setSelectedGenre(selectedGenre === g ? null : g)}
+              />
             ))}
           </div>
         </section>
@@ -504,7 +554,9 @@ export default function MoviesPage(): React.JSX.Element {
               Results for &ldquo;{searchQuery}&rdquo;
             </h2>
             {!isSearching && (
-              <span className="text-[10px] text-muted-foreground/50 font-bold">{searchResults.length} found</span>
+              <span className="text-[10px] text-muted-foreground/50 font-bold">
+                {searchResults.length} found
+              </span>
             )}
           </div>
         </section>
@@ -537,13 +589,19 @@ export default function MoviesPage(): React.JSX.Element {
       <section className="px-6">
         {loadingMovies || isSearching ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {Array.from({ length: PAGE_SIZE }).map((_, i) => <MovieCardSkeleton key={i} />)}
+            {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+              <MovieCardSkeleton key={i} />
+            ))}
           </div>
         ) : moviesError ? (
           <div className="py-24 flex flex-col items-center justify-center gap-4 border border-dashed border-border/20 rounded-2xl bg-muted/5">
             <AlertTriangle className="size-10 text-destructive/50 animate-pulse" />
             <p className="text-sm font-bold text-white/60">{moviesError}</p>
-            <Button size="sm" onClick={loadMovies} className="bg-primary text-primary-foreground text-xs font-black rounded-xl cursor-pointer flex items-center gap-1.5">
+            <Button
+              size="sm"
+              onClick={loadMovies}
+              className="bg-primary text-primary-foreground text-xs font-black rounded-xl cursor-pointer flex items-center gap-1.5"
+            >
               <RotateCcw className="size-3" /> Try Again
             </Button>
           </div>
@@ -567,7 +625,10 @@ export default function MoviesPage(): React.JSX.Element {
                 item={movie}
                 inWatchlist={isInWatchlist(movie)}
                 onNavigate={() => navigate(`/movies/${getSlug(movie)}`)}
-                onWatchlistToggle={(e) => { e.stopPropagation(); toggleWatchlist(movie) }}
+                onWatchlistToggle={(e) => {
+                  e.stopPropagation()
+                  toggleWatchlist(movie)
+                }}
               />
             ))}
           </div>
@@ -601,7 +662,9 @@ export default function MoviesPage(): React.JSX.Element {
             ))}
             {totalPages > 7 && (
               <>
-                <span className="flex items-center justify-center size-8 text-[11px] text-muted-foreground/30 font-black">...</span>
+                <span className="flex items-center justify-center size-8 text-[11px] text-muted-foreground/30 font-black">
+                  ...
+                </span>
                 <button
                   onClick={() => setCurrentPage(totalPages)}
                   className={`size-8 rounded-xl text-[11px] font-black cursor-pointer transition-all border ${
@@ -625,7 +688,9 @@ export default function MoviesPage(): React.JSX.Element {
           </button>
 
           <Separator orientation="vertical" className="h-5 bg-border/25 mx-1" />
-          <span className="text-[10px] text-muted-foreground/40 font-bold">Page {currentPage} of {totalPages}</span>
+          <span className="text-[10px] text-muted-foreground/40 font-bold">
+            Page {currentPage} of {totalPages}
+          </span>
         </section>
       )}
     </div>

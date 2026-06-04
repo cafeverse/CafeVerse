@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Maximize2, RefreshCw, Play, Loader2, ChevronDown } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Loader2, ChevronDown } from 'lucide-react'
 import type { MediaItem, Episode, SeasonMeta } from '@/types'
 
 const API_BASE = 'https://cafeverce-api.vercel.app'
@@ -10,29 +8,10 @@ export interface MediaPlayerProps {
   item: MediaItem
 }
 
-interface SourceOption {
-  name: string
-  getUrl: (item: MediaItem, season: number, episode: number) => string
-}
-
-const SOURCES: SourceOption[] = [
-  {
-    name: 'VAPlayer',
-    getUrl: (item, s, e) => {
-      const id = item.imdbId || String(item.tmdbId || item.id)
-      return item.contentType === 'tv'
-        ? `https://vaplayer.ru/embed/tv/${id}/${s}/${e}`
-        : `https://vaplayer.ru/embed/movie/${id}`
-    }
-  }
-]
-
 export default function MediaPlayer({ item }: MediaPlayerProps): React.JSX.Element {
   const isTv = item.contentType === 'tv'
 
   // Player & Iframe states
-  const [sourceIdx, setSourceIdx] = useState(0)
-  const [iframeKey, setIframeKey] = useState(0)
   const [iframeLoaded, setIframeLoaded] = useState(false)
 
   // TV Show specific states
@@ -130,84 +109,18 @@ export default function MediaPlayer({ item }: MediaPlayerProps): React.JSX.Eleme
     return () => clearTimeout(timer)
   }, [isTv, currentSeason, item, seasons])
 
-  const activeSource = SOURCES[sourceIdx]
-  const embedUrl = activeSource.getUrl(item, currentSeason, currentEpisode)
-
-  const handleSourceChange = (idx: number): void => {
-    setSourceIdx(idx)
-    setIframeLoaded(false)
-    setIframeKey((k) => k + 1)
-  }
-
-  const handleFullscreen = (): void => {
-    const iframe = document.getElementById('media-iframe') as HTMLIFrameElement | null
-    if (iframe) {
-      iframe.requestFullscreen?.()
-    }
-  }
-
-  const handleRefresh = (): void => {
-    setIframeLoaded(false)
-    setIframeKey((k) => k + 1)
-  }
+  const mediaId = item.tmdbId || item.id
+  const embedUrl = isTv
+    ? `https://vaplayer.ru/embed/tv/${mediaId}/${currentSeason}/${currentEpisode}`
+    : `https://vaplayer.ru/embed/movie/${mediaId}`
 
   return (
     <div
       ref={playerRef}
-      className="space-y-6 pt-4 animate-in fade-in slide-in-from-bottom-8 duration-700"
+      className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700"
     >
-      {/* Player Header Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/10 border border-border/20 p-4 rounded-2xl">
-        <div className="flex items-center gap-3">
-          <Badge className="bg-primary/20 text-primary border border-primary/20 text-[9.5px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">
-            {isTv ? `S${currentSeason}E${currentEpisode}` : 'Movie'}
-          </Badge>
-          <div className="flex items-center gap-1.5 text-xs text-white/90 font-bold uppercase tracking-wider">
-            <Play className="size-3.5 fill-current text-primary" />
-            <span>Now Playing</span>
-          </div>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Source Selector */}
-          <div className="relative group">
-            <select
-              value={sourceIdx}
-              onChange={(e) => handleSourceChange(parseInt(e.target.value))}
-              className="h-9.5 bg-muted hover:bg-muted/80 border border-border/40 hover:border-primary/20 text-white font-extrabold text-[11px] uppercase tracking-wider rounded-xl px-3 pr-8 outline-hidden focus:ring-1 focus:ring-primary cursor-pointer transition-all appearance-none"
-            >
-              {SOURCES.map((src, i) => (
-                <option key={src.name} value={i} className="bg-background font-bold text-xs py-2">
-                  {src.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="size-3.5 absolute right-2.5 top-3 pointer-events-none text-muted-foreground/60" />
-          </div>
-
-          <Button
-            size="sm"
-            onClick={handleRefresh}
-            className="bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-extrabold uppercase tracking-widest rounded-xl px-4.5 py-2 cursor-pointer transition-all flex items-center gap-1.5"
-          >
-            <RefreshCw className="size-3" />
-            <span>Refresh</span>
-          </Button>
-
-          <Button
-            size="sm"
-            onClick={handleFullscreen}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-extrabold uppercase tracking-widest rounded-xl px-4.5 py-2 cursor-pointer transition-all flex items-center gap-1.5"
-          >
-            <Maximize2 className="size-3" />
-            <span>Fullscreen</span>
-          </Button>
-        </div>
-      </div>
-
       {/* Main Video Screen Container */}
-      <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black shadow-2xl ring-1 ring-white/10">
+      <div className="relative w-full aspect-video overflow-hidden bg-black">
         {!iframeLoaded && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#09090b]/90 z-10">
             <Loader2 className="size-10 text-primary animate-spin" />
@@ -218,7 +131,7 @@ export default function MediaPlayer({ item }: MediaPlayerProps): React.JSX.Eleme
         )}
         <iframe
           id="media-iframe"
-          key={iframeKey}
+          key={embedUrl}
           src={embedUrl}
           title={`Watch ${item.title || item.name}`}
           className="w-full h-full"
@@ -230,7 +143,7 @@ export default function MediaPlayer({ item }: MediaPlayerProps): React.JSX.Eleme
 
       {/* TV Season / Episode selectors below screen */}
       {isTv && seasons.length > 0 && (
-        <div className="space-y-4 bg-muted/5 border border-border/10 p-5 rounded-3xl animate-in fade-in duration-500">
+        <div className="space-y-4 bg-muted/5 border border-border/10 p-5 animate-in fade-in duration-500">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/10 pb-4">
             <div className="space-y-1">
               <span className="text-[9.5px] uppercase tracking-[0.25em] text-primary font-black block">
@@ -251,7 +164,7 @@ export default function MediaPlayer({ item }: MediaPlayerProps): React.JSX.Eleme
                       setCurrentSeason(parseInt(e.target.value))
                       setIframeLoaded(false)
                     }}
-                    className="h-9.5 bg-muted hover:bg-muted/80 border border-border/40 hover:border-primary/20 text-white font-extrabold text-[11px] uppercase tracking-wider rounded-xl px-3 pr-8 outline-hidden focus:ring-1 focus:ring-primary cursor-pointer transition-all appearance-none"
+                    className="h-9.5 bg-muted hover:bg-muted/80 border border-border/40 hover:border-primary/20 text-white font-extrabold text-[11px] uppercase tracking-wider px-3 pr-8 outline-hidden focus:ring-1 focus:ring-primary cursor-pointer transition-all appearance-none"
                   >
                     {seasons.map((s) => (
                       <option
@@ -289,7 +202,7 @@ export default function MediaPlayer({ item }: MediaPlayerProps): React.JSX.Eleme
                       setCurrentEpisode(ep.episodeNumber)
                       setIframeLoaded(false)
                     }}
-                    className={`p-3 rounded-2xl text-[10px] font-extrabold text-left border transition-all cursor-pointer truncate ${
+                    className={`p-3 text-[10px] font-extrabold text-left border transition-all cursor-pointer truncate ${
                       isActive
                         ? 'bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20'
                         : 'bg-muted/40 text-white/80 border-border/25 hover:bg-muted hover:text-white hover:border-border/50'

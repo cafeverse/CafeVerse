@@ -1,16 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
-import {
-  ChevronLeft,
-  Star,
-  Play,
-  Check,
-  AlertTriangle
-} from 'lucide-react'
+import { ChevronLeft, Star, Play, Check, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { MediaItem } from '@/types'
-import MediaPlayer from '@/components/media-player'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -29,10 +22,10 @@ const getBackdrop = (item: MediaItem): string => {
 const resolveItem = (res: unknown): MediaItem | null => {
   if (res && typeof res === 'object') {
     const obj = res as Record<string, unknown>
-    
+
     // Some endpoints return the item directly
     if (obj.id) return obj as unknown as MediaItem
-    
+
     // Others wrap it in a data, item, or movie property
     let itemObj: Record<string, unknown> | null = null
     if (obj.movie && typeof obj.movie === 'object') itemObj = obj.movie as Record<string, unknown>
@@ -42,7 +35,9 @@ const resolveItem = (res: unknown): MediaItem | null => {
     if (itemObj) {
       if (Array.isArray(obj.cast)) itemObj.cast = obj.cast
       if (Array.isArray(obj.genres)) {
-        itemObj.genres = (obj.genres as Array<string | { name: string }>).map((g) => typeof g === 'string' ? g : g.name)
+        itemObj.genres = (obj.genres as Array<string | { name: string }>).map((g) =>
+          typeof g === 'string' ? g : g.name
+        )
       }
       return itemObj as unknown as MediaItem
     }
@@ -67,16 +62,14 @@ export default function MovieSlugPage(): React.JSX.Element {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // ── Player state ──────────────────────────────────────────────────────────
-  const [playerVisible, setPlayerVisible] = useState(false)
-  const playerRef = useRef<HTMLDivElement>(null)
-
   // ── Watchlist ─────────────────────────────────────────────────────────────
   const [watchlist, setWatchlist] = useState<MediaItem[]>(() => {
     try {
       const s = localStorage.getItem('cafeverse_watchlist')
       return s ? JSON.parse(s) : []
-    } catch { return [] }
+    } catch {
+      return []
+    }
   })
 
   const inWatchlist = movie
@@ -102,38 +95,42 @@ export default function MovieSlugPage(): React.JSX.Element {
       setLoading(true)
       setError(null)
       setMovie(null)
-      setPlayerVisible(false)
 
       const tryFetch = async (): Promise<void> => {
         const res1 = await fetch(`${API_BASE}/movies/${slug}`)
         if (res1.ok) {
           const item = resolveItem(await res1.json())
-          if (item) { setMovie(item); return }
+          if (item) {
+            setMovie(item)
+            return
+          }
         }
 
         const res2 = await fetch(`${API_BASE}/movies/content/${slug}`)
         if (res2.ok) {
           const item = resolveItem(await res2.json())
-          if (item) { setMovie(item); return }
+          if (item) {
+            setMovie(item)
+            return
+          }
         }
         throw new Error('Movie not found')
       }
 
       tryFetch()
-        .catch(() => setError('We could not find this movie. It may have been removed or the link is incorrect.'))
+        .catch(() =>
+          setError(
+            'We could not find this movie. It may have been removed or the link is incorrect.'
+          )
+        )
         .finally(() => setLoading(false))
     }, 0)
 
     return () => clearTimeout(timer)
   }, [slug])
 
-
-
   const handlePlayClick = (): void => {
-    setPlayerVisible(true)
-    setTimeout(() => {
-      playerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }, 150)
+    navigate(`/movies/${slug}/watch`)
   }
 
   if (loading) {
@@ -157,7 +154,10 @@ export default function MovieSlugPage(): React.JSX.Element {
           <h2 className="text-lg font-black mb-2">Movie Not Found</h2>
           <p className="text-xs text-white/50 max-w-sm">{error}</p>
         </div>
-        <Button onClick={() => navigate('/movies')} className="bg-white text-black font-black rounded-xl px-5 flex items-center gap-2">
+        <Button
+          onClick={() => navigate('/movies')}
+          className="bg-white text-black font-black rounded-xl px-5 flex items-center gap-2"
+        >
           <ChevronLeft className="size-4" /> Back to Movies
         </Button>
       </div>
@@ -171,9 +171,8 @@ export default function MovieSlugPage(): React.JSX.Element {
 
   return (
     <div className="min-h-full bg-[#09090b] text-white font-sans antialiased selection:bg-white/20">
-
       {/* ── 1. Hero Backdrop ─────────────────────────────────────────────── */}
-      <div className="relative w-full h-[65vh] min-h-[450px] overflow-hidden">
+      <div className="relative w-full h-[65vh] min-h-112.5 overflow-hidden">
         {backdrop ? (
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-100"
@@ -182,11 +181,11 @@ export default function MovieSlugPage(): React.JSX.Element {
         ) : (
           <div className="absolute inset-0 bg-white/5" />
         )}
-        
+
         {/* Soft radial vignette & bottom gradient to blend into background */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(9,9,11,0.4)_100%)]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/50 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#09090b]/80 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-[#09090b] via-[#09090b]/50 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-[#09090b]/80 via-transparent to-transparent" />
 
         {/* Back button */}
         <button
@@ -202,7 +201,7 @@ export default function MovieSlugPage(): React.JSX.Element {
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter uppercase leading-[0.9] drop-shadow-2xl">
             {movie.title || movie.name}
           </h1>
-          
+
           <div className="flex items-center gap-3 md:gap-4 mt-6 text-[11px] md:text-xs font-bold tracking-widest text-white/80 drop-shadow-md uppercase">
             {year && <span>{year}</span>}
             {year && runtime && <span className="text-white/40">•</span>}
@@ -214,14 +213,12 @@ export default function MovieSlugPage(): React.JSX.Element {
       </div>
 
       {/* ── 2. Main Content ──────────────────────────────────────────────── */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12 lg:px-24 py-12 space-y-20 pb-32">
-
+      <div className="max-w-350 mx-auto px-6 md:px-12 lg:px-24 py-12 space-y-20 pb-32">
         {/* Top Row: Rating/Actions & Storyline */}
         <div className="flex flex-col md:flex-row gap-12 lg:gap-24">
-          
           {/* Left: Actions Card */}
           <div className="w-full md:w-64 shrink-0">
-            <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 flex flex-col gap-8 shadow-2xl backdrop-blur-sm">
+            <div className="bg-white/2 border border-white/5 rounded-3xl p-6 flex flex-col gap-8 shadow-2xl backdrop-blur-sm">
               <div>
                 <div className="text-[10px] text-white/40 font-bold tracking-[0.2em] uppercase mb-2">
                   IMDb Rating
@@ -244,7 +241,9 @@ export default function MovieSlugPage(): React.JSX.Element {
                   variant="outline"
                   onClick={toggleWatchlist}
                   className={`w-full py-6 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-xs tracking-wide border-white/10 ${
-                    inWatchlist ? 'bg-white/10 text-white' : 'bg-transparent text-white/70 hover:bg-white/5 hover:text-white'
+                    inWatchlist
+                      ? 'bg-white/10 text-white'
+                      : 'bg-transparent text-white/70 hover:bg-white/5 hover:text-white'
                   }`}
                 >
                   {inWatchlist ? <Check className="size-4" /> : <Star className="size-4" />}
@@ -256,7 +255,9 @@ export default function MovieSlugPage(): React.JSX.Element {
 
           {/* Right: Storyline */}
           <div className="flex-1 space-y-6 max-w-3xl pt-2">
-            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-white/90">Storyline</h2>
+            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-white/90">
+              Storyline
+            </h2>
             <p className="text-base md:text-lg text-white/60 leading-relaxed font-medium">
               {movie.overview || 'No synopsis is available for this title.'}
             </p>
@@ -268,13 +269,6 @@ export default function MovieSlugPage(): React.JSX.Element {
           </div>
         </div>
 
-        {/* Player Section */}
-        {playerVisible && (
-          <div ref={playerRef}>
-            <MediaPlayer item={movie} />
-          </div>
-        )}
-
         {/* Cast Section */}
         {movie.cast && movie.cast.length > 0 && (
           <div className="space-y-8 pt-4">
@@ -282,7 +276,7 @@ export default function MovieSlugPage(): React.JSX.Element {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-4 lg:gap-6">
               {movie.cast.slice(0, 8).map((member) => (
                 <div key={member.id || member.name} className="group space-y-3">
-                  <div className="aspect-[2/3] w-full rounded-2xl overflow-hidden bg-white/5 border border-white/5">
+                  <div className="aspect-2/3 w-full rounded-2xl overflow-hidden bg-white/5 border border-white/5">
                     {member.profilePath ? (
                       <img
                         src={`https://image.tmdb.org/t/p/w300${member.profilePath.startsWith('/') ? member.profilePath : `/${member.profilePath}`}`}
@@ -297,15 +291,18 @@ export default function MovieSlugPage(): React.JSX.Element {
                     )}
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-[11px] font-extrabold text-white leading-tight">{member.name}</p>
-                    <p className="text-[9px] font-bold text-white/40 uppercase tracking-wider">{member.character}</p>
+                    <p className="text-[11px] font-extrabold text-white leading-tight">
+                      {member.name}
+                    </p>
+                    <p className="text-[9px] font-bold text-white/40 uppercase tracking-wider">
+                      {member.character}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         )}
-
       </div>
     </div>
   )
