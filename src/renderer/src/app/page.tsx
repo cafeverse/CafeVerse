@@ -306,7 +306,12 @@ export default function DashboardPage(): React.JSX.Element {
 
   // Handle open detail page
   const openMediaDetails = (media: MediaItem): void => {
-    navigate(`/movies/${getSlug(media)}`)
+    const slug = getSlug(media)
+    if (media.contentType === 'tv') {
+      navigate(`/tv/${slug}`)
+    } else {
+      navigate(`/movies/${slug}`)
+    }
   }
 
   // Simulated Player state clock logic
