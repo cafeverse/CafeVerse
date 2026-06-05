@@ -256,6 +256,18 @@ export default function DashboardPage(): React.JSX.Element {
     }
   }, [featuredMedia])
 
+  // Listen for global keyboard shortcut to toggle search dialog (Ctrl+K or Cmd+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setSearchOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   useEffect(() => {
     const timer = setTimeout(() => {
       loadDashboardData()
@@ -322,10 +334,15 @@ export default function DashboardPage(): React.JSX.Element {
           <DialogTrigger asChild>
             <Button
               variant="outline"
-              className="w-full md:w-96 justify-start text-muted-foreground bg-muted/40 border-border/40 hover:bg-muted hover:text-foreground rounded-full px-4"
+              className="w-full md:w-96 justify-between text-muted-foreground bg-muted/40 border-border/40 hover:bg-muted hover:text-foreground rounded-full px-4"
             >
-              <Search className="size-4 mr-2" />
-              <span>Search movies, TV shows...</span>
+              <div className="flex items-center">
+                <Search className="size-4 mr-2" />
+                <span>Search movies, TV shows...</span>
+              </div>
+              <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border border-border/40 bg-muted px-1.5 font-mono text-[9px] font-extrabold opacity-100 sm:flex text-muted-foreground/85">
+                <span>Ctrl</span><span>K</span>
+              </kbd>
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden bg-background border-border/40 gap-0">
