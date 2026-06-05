@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useOutletContext, useNavigate } from 'react-router-dom'
 import {
   Tv,
-  Search,
   SlidersHorizontal,
   Star,
   Plus,
@@ -248,10 +247,7 @@ export default function TvShowsPage(): React.JSX.Element {
   const [featuredIdx, setFeaturedIdx] = useState(0)
   const spotlightRef = useRef<NodeJS.Timeout | null>(null)
 
-  // ── Search ────────────────────────────────────────────────────────────────
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<MediaItem[]>([])
-  const [isSearching, setIsSearching] = useState(false)
+
 
   // ── Watchlist ─────────────────────────────────────────────────────────────
   const [watchlist, setWatchlist] = useState<MediaItem[]>(() => {
@@ -355,36 +351,11 @@ export default function TvShowsPage(): React.JSX.Element {
     return () => clearTimeout(timer)
   }, [selectedGenre, sortOption])
 
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      const timer = setTimeout(() => {
-        setSearchResults([])
-        setIsSearching(false)
-      }, 0)
-      return () => clearTimeout(timer)
-    }
-    const t = setTimeout(async () => {
-      setIsSearching(true)
-      try {
-        const params = new URLSearchParams({
-          q: searchQuery,
-          type: 'tv',
-          page: '1',
-          limit: '12'
-        })
-        setSearchResults(resolveList(await fetchApi(`/search?${params}`)))
-      } catch {
-        setSearchResults([])
-      } finally {
-        setIsSearching(false)
-      }
-    }, 380)
-    return () => clearTimeout(t)
-  }, [searchQuery, fetchApi])
+
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const spotlight = featured[featuredIdx]
-  const displayShows = searchQuery.trim() ? searchResults : shows
+  const displayShows = shows
   const totalPages = pagination?.totalPages ?? 1
 
   // Suppress unused warning — getImageUrl is passed to child via context and used for backdrop
@@ -393,28 +364,8 @@ export default function TvShowsPage(): React.JSX.Element {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-full bg-background text-foreground font-sans antialiased pb-20 select-none">
-      {/* ── 1. Top bar: search + sort ──────────────────────────────────────── */}
+      {/* ── 1. Top bar: sort ──────────────────────────────────────────────── */}
       <div className="sticky top-0 z-30 px-6 py-3.5 backdrop-blur-xl bg-background/60 border-b border-border/30 flex items-center gap-3 flex-wrap">
-        <div className="flex flex-1 min-w-48 max-w-sm items-center bg-muted/40 border border-border/40 rounded-full px-3 py-1 text-xs shadow-inner focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10 transition-all">
-          <Search className="size-3.5 text-muted-foreground/50 mr-2 shrink-0" />
-          <input
-            type="text"
-            id="tvshows-search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search TV shows..."
-            className="flex-1 bg-transparent border-0 outline-hidden py-1.5 text-white placeholder-muted-foreground/50 text-xs"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="p-0.5 rounded-full bg-white/5 hover:bg-white/15 text-muted-foreground cursor-pointer transition-colors"
-            >
-              <X className="size-3" />
-            </button>
-          )}
-        </div>
-
         <div className="flex items-center gap-1.5 ml-auto flex-wrap">
           <SlidersHorizontal className="size-3.5 text-muted-foreground/40 shrink-0" />
           <span className="text-[10px] text-muted-foreground/40 font-bold uppercase tracking-widest hidden sm:block">
@@ -432,7 +383,7 @@ export default function TvShowsPage(): React.JSX.Element {
       </div>
 
       {/* ── 2. Featured spotlight ─────────────────────────────────────────── */}
-      {!searchQuery && spotlight && (
+      {spotlight && (
         <section className="px-6 pt-6">
           <div className="w-full h-85 rounded-2xl relative overflow-hidden group border border-border/20 shadow-2xl">
             <div
@@ -530,7 +481,7 @@ export default function TvShowsPage(): React.JSX.Element {
       )}
 
       {/* ── 3. Genre filter pills ─────────────────────────────────────────── */}
-      {!searchQuery && genres.length > 0 && (
+      {genres.length > 0 && (
         <section className="px-6 pt-5">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
             <GenreChip
@@ -550,49 +501,30 @@ export default function TvShowsPage(): React.JSX.Element {
         </section>
       )}
 
-      {/* ── 4. Search results header ─────────────────────────────────────── */}
-      {searchQuery && (
-        <section className="px-6 pt-6">
-          <div className="flex items-center justify-between mb-4 border-b border-border/25 pb-3">
-            <h2 className="text-sm font-black tracking-tight text-white flex items-center gap-2">
-              <Search className="size-4 text-primary" />
-              Results for &ldquo;{searchQuery}&rdquo;
-            </h2>
-            {!isSearching && (
-              <span className="text-[10px] text-muted-foreground/50 font-bold">
-                {searchResults.length} found
-              </span>
-            )}
-          </div>
-        </section>
-      )}
-
       {/* ── 5. Catalogue heading ─────────────────────────────────────────── */}
-      {!searchQuery && (
-        <section className="px-6 pt-6 pb-3 flex items-center justify-between">
-          <h2 className="text-sm font-black tracking-tight text-white flex items-center gap-2">
-            <Sparkles className="size-4 text-primary" />
-            {selectedGenre ? `${selectedGenre} TV Shows` : 'All TV Shows'}
-            {pagination && (
-              <span className="text-[10px] text-muted-foreground/40 font-bold ml-1">
-                ({pagination.totalItems?.toLocaleString()})
-              </span>
-            )}
-          </h2>
-          {selectedGenre && (
-            <button
-              onClick={() => setSelectedGenre(null)}
-              className="text-[10px] text-muted-foreground/50 hover:text-white font-bold flex items-center gap-1 cursor-pointer transition-colors"
-            >
-              <X className="size-3" /> Clear filter
-            </button>
+      <section className="px-6 pt-6 pb-3 flex items-center justify-between">
+        <h2 className="text-sm font-black tracking-tight text-white flex items-center gap-2">
+          <Sparkles className="size-4 text-primary" />
+          {selectedGenre ? `${selectedGenre} TV Shows` : 'All TV Shows'}
+          {pagination && (
+            <span className="text-[10px] text-muted-foreground/40 font-bold ml-1">
+              ({pagination.totalItems?.toLocaleString()})
+            </span>
           )}
-        </section>
-      )}
+        </h2>
+        {selectedGenre && (
+          <button
+            onClick={() => setSelectedGenre(null)}
+            className="text-[10px] text-muted-foreground/50 hover:text-white font-bold flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            <X className="size-3" /> Clear filter
+          </button>
+        )}
+      </section>
 
       {/* ── 6. Catalogue Grid ────────────────────────────────────────────── */}
       <section className="px-6">
-        {loadingShows || isSearching ? (
+        {loadingShows ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {Array.from({ length: PAGE_SIZE }).map((_, i) => (
               <TvShowCardSkeleton key={i} />
@@ -615,10 +547,10 @@ export default function TvShowsPage(): React.JSX.Element {
             <Tv className="size-12 text-muted-foreground/20" />
             <div className="text-center">
               <p className="text-sm font-bold text-white/50 mb-1">
-                {searchQuery ? 'No TV shows match your search.' : 'No TV shows found.'}
+                No TV shows found.
               </p>
               <p className="text-xs text-muted-foreground/40">
-                {searchQuery ? 'Try a different term.' : 'Try a different genre or sort option.'}
+                Try a different genre or sort option.
               </p>
             </div>
           </div>
@@ -641,7 +573,7 @@ export default function TvShowsPage(): React.JSX.Element {
       </section>
 
       {/* ── 7. Pagination ────────────────────────────────────────────────── */}
-      {!searchQuery && !loadingShows && totalPages > 1 && (
+      {!loadingShows && totalPages > 1 && (
         <section className="px-6 pt-8 flex items-center justify-center gap-2 flex-wrap">
           <button
             disabled={currentPage <= 1}

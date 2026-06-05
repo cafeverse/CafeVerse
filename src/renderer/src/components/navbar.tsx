@@ -30,9 +30,9 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import SearchBar from '@/components/search-bar'
-import { SearchResultsPanel } from '@/components/search-results'
+import { SearchResultsPanel, AutocompletePanel } from '@/components/search-results'
 import { useSearch } from '@/hooks/use-search'
-import type { MediaItem } from '@/types'
+import type { MediaItem, AutocompleteItem } from '@/types'
 
 interface NavbarProps {
   updateAvailable?: boolean
@@ -223,7 +223,9 @@ export const Navbar: React.FC<NavbarProps> = ({ updateAvailable }) => {
     isSearching,
     type: searchType,
     setType: setSearchType,
-    clear: clearSearch
+    clear: clearSearch,
+    autocompleteResults,
+    isAutocompleting
   } = useSearch()
 
   // Listen for global keyboard shortcut to toggle search dialog (Ctrl+K or Cmd+K)
@@ -248,6 +250,16 @@ export const Navbar: React.FC<NavbarProps> = ({ updateAvailable }) => {
     setSearchOpen(false)
     const slug = media.slug || String(media.id)
     if (media.contentType === 'tv') {
+      navigate(`/tv/${slug}`)
+    } else {
+      navigate(`/movies/${slug}`)
+    }
+  }
+
+  const handleSuggestionClick = (item: AutocompleteItem): void => {
+    setSearchOpen(false)
+    const slug = String(item.id)
+    if (item.contentType === 'tv') {
       navigate(`/tv/${slug}`)
     } else {
       navigate(`/movies/${slug}`)
@@ -434,6 +446,11 @@ export const Navbar: React.FC<NavbarProps> = ({ updateAvailable }) => {
             />
           </div>
           <div className="max-h-[60vh] overflow-y-auto">
+            <AutocompletePanel
+              suggestions={autocompleteResults}
+              isSearching={isAutocompleting}
+              onClick={handleSuggestionClick}
+            />
             <SearchResultsPanel
               query={searchQuery}
               results={searchResults}

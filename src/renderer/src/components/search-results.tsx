@@ -3,7 +3,7 @@ import { Film, Tv, PlayCircle, Star, AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
-import type { MediaItem } from '@/types'
+import type { MediaItem, AutocompleteItem } from '@/types'
 
 // ---------------------------------------------------------------------------
 // SearchResultCard — single poster tile
@@ -169,3 +169,96 @@ export function SearchResultsPanel({
     </section>
   )
 }
+
+// ---------------------------------------------------------------------------
+// AutocompletePanel — compact autocomplete suggestion rows
+// ---------------------------------------------------------------------------
+
+export interface AutocompletePanelProps {
+  suggestions: AutocompleteItem[]
+  isSearching: boolean
+  onClick: (item: AutocompleteItem) => void
+}
+
+export function AutocompletePanel({
+  suggestions,
+  isSearching,
+  onClick
+}: AutocompletePanelProps): React.JSX.Element | null {
+  if (suggestions.length === 0) return null
+
+  return (
+    <div className="px-8 py-3 bg-[#0c0a09]/45 border-b border-border/20 backdrop-blur-md">
+      <div className="flex items-center gap-1.5 mb-2.5">
+        <span className="text-[10px] font-black tracking-widest text-primary uppercase select-none">
+          Suggestions
+        </span>
+        {isSearching && (
+          <span className="text-[9px] text-muted-foreground/45 animate-pulse font-bold">
+            (loading...)
+          </span>
+        )}
+      </div>
+      <div className="flex flex-col gap-1">
+        {suggestions.map((item) => {
+          const year = item.releaseDate
+            ? new Date(item.releaseDate).getFullYear()
+            : item.firstAirDate
+              ? new Date(item.firstAirDate).getFullYear()
+              : null
+
+          return (
+            <button
+              key={`${item.contentType}-${item.id}`}
+              onClick={() => onClick(item)}
+              className="flex items-center justify-between p-2 rounded-xl text-left border border-transparent hover:border-border/30 hover:bg-white/3 transition-all duration-200 cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                {item.posterPath ? (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w92${item.posterPath}`}
+                    alt={item.title || item.name}
+                    className="w-7 h-10 object-cover rounded-md bg-muted border border-border/10"
+                  />
+                ) : (
+                  <div className="w-7 h-10 bg-muted/60 border border-border/10 flex items-center justify-center rounded-md">
+                    {item.contentType === 'movie' ? (
+                      <Film className="size-3 text-muted-foreground/35" />
+                    ) : (
+                      <Tv className="size-3 text-muted-foreground/35" />
+                    )}
+                  </div>
+                )}
+                <div>
+                  <h4 className="font-extrabold text-[11px] text-foreground leading-tight group-hover:text-primary transition-colors">
+                    {item.title || item.name}
+                  </h4>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[9px] text-muted-foreground/50 font-bold uppercase">
+                      {item.contentType === 'movie' ? 'Movie' : 'TV Show'}
+                    </span>
+                    {year && (
+                      <>
+                        <span className="text-muted-foreground/25 text-[8px]">·</span>
+                        <span className="text-[9px] text-muted-foreground/45 font-bold">{year}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {item.similarity > 0 && (
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[8px] font-black rounded-md px-1.5 py-0.5">
+                    {Math.round(item.similarity * 100)}% match
+                  </Badge>
+                </div>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
