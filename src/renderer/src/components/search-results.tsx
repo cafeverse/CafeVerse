@@ -188,7 +188,7 @@ export function AutocompletePanel({
   if (suggestions.length === 0) return null
 
   return (
-    <div className="px-8 py-3 bg-[#0c0a09]/45 border-b border-border/20 backdrop-blur-md">
+    <div className="px-8 py-3 bg-background/45 border-b border-border/20 backdrop-blur-md">
       <div className="flex items-center gap-1.5 mb-2.5">
         <span className="text-[10px] font-black tracking-widest text-primary uppercase select-none">
           Suggestions
@@ -211,7 +211,7 @@ export function AutocompletePanel({
             <button
               key={`${item.contentType}-${item.id}`}
               onClick={() => onClick(item)}
-              className="flex items-center justify-between p-2 rounded-xl text-left border border-transparent hover:border-border/30 hover:bg-white/3 transition-all duration-200 cursor-pointer group"
+              className="flex items-center justify-between p-2 rounded-xl text-left border border-transparent hover:border-border/30 hover:bg-accent/40 transition-all duration-200 cursor-pointer group"
             >
               <div className="flex items-center gap-3">
                 {item.posterPath ? (
