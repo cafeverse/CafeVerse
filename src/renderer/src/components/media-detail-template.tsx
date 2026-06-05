@@ -143,6 +143,31 @@ export default function MediaDetailTemplate({
     return () => clearTimeout(timer)
   }, [slug, contentType])
 
+  // Discord RPC Rich Presence Update
+  useEffect(() => {
+    if (!media) return
+
+    const posterUrl = media.posterPath
+      ? media.posterPath.startsWith('http')
+        ? media.posterPath
+        : `https://image.tmdb.org/t/p/w500${media.posterPath.startsWith('/') ? '' : '/'}${media.posterPath}`
+      : 'logo'
+
+    window.api?.discord?.updateActivity({
+      details: media.title || media.name,
+      state: contentType === 'movie' ? 'Watching a Movie' : 'Watching a TV Show',
+      startTimestamp: Date.now(),
+      largeImageKey: posterUrl,
+      largeImageText: media.title || media.name,
+      smallImageKey: 'logo',
+      smallImageText: 'CaféVerse'
+    })
+
+    return () => {
+      window.api?.discord?.clearActivity()
+    }
+  }, [media, contentType])
+
   if (loading) {
     return (
       <div className="min-h-full bg-background animate-pulse">
