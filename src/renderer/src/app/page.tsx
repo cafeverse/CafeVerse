@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useOutletContext, useNavigate } from 'react-router-dom'
 import {
-  Search,
   Film,
   Tv,
   Star,
@@ -12,19 +11,19 @@ import {
   Sparkles,
   Info,
   X,
-  AlertTriangle,
   Flame,
-  PlayCircle,
   HelpCircle,
   Bookmark
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { MediaItem, Episode } from '@/types'
+import type { MediaItem, Episode } from '@/types'
 import MediaRow from '@/components/media-row'
+import SearchBar from '@/components/search-bar'
+import { SearchResultsPanel } from '@/components/search-results'
+import { useSearch } from '@/hooks/use-search'
 
 const apiBaseUrl = 'https://cafeverce-api.vercel.app/'
 
@@ -60,11 +59,18 @@ export default function DashboardPage(): React.JSX.Element {
     recentTv: null
   })
 
-  // 3. Search & Watchlist States
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<MediaItem[]>([])
-  const [isSearching, setIsSearching] = useState(false)
-  const [searchType, setSearchType] = useState<'all' | 'movie' | 'tv'>('all')
+  // 3. Search state
+  const {
+    query: searchQuery,
+    setQuery: setSearchQuery,
+    results: searchResults,
+    isSearching,
+    type: searchType,
+    setType: setSearchType,
+    clear: clearSearch
+  } = useSearch()
+
+  // 4. Watchlist state (persisted to localStorage)
   const [watchlist, setWatchlist] = useState<MediaItem[]>(() => {
     try {
       const saved = localStorage.getItem('cafeverse_watchlist')
@@ -254,54 +260,6 @@ export default function DashboardPage(): React.JSX.Element {
     return () => clearTimeout(timer)
   }, [loadDashboardData])
 
-  // ==========================================
-  // REAL-TIME SEARCH ENGINE
-  // ==========================================
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      const timer = setTimeout(() => {
-        setSearchResults([])
-        setIsSearching(false)
-      }, 0)
-      return () => clearTimeout(timer)
-    }
-
-    const delayDebounce = setTimeout(async () => {
-      setIsSearching(true)
-      try {
-        // Query /search endpoint with parameters
-        const urlParams = new URLSearchParams({
-          q: searchQuery,
-          page: '1',
-          limit: '12'
-        })
-        if (searchType !== 'all') {
-          urlParams.append('type', searchType)
-        }
-
-        const data = await fetchFromApi(`/search?${urlParams.toString()}`)
-        if (Array.isArray(data)) {
-          setSearchResults(data)
-        } else if (data && data.data) {
-          setSearchResults(data.data)
-        } else if (data && data.items) {
-          setSearchResults(data.items)
-        } else if (data && data.results) {
-          setSearchResults(data.results)
-        } else {
-          setSearchResults([])
-        }
-      } catch (e) {
-        console.error('Instant search query failed:', e)
-        setSearchResults([])
-      } finally {
-        setIsSearching(false)
-      }
-    }, 400) // 400ms search throttle debouncer
-
-    return () => clearTimeout(delayDebounce)
-  }, [searchQuery, searchType, fetchFromApi])
-
   const getSlug = (item: MediaItem): string => item.slug || String(item.id)
 
   // Handle open detail page
@@ -355,130 +313,25 @@ export default function DashboardPage(): React.JSX.Element {
 
   return (
     <div className="min-h-full pb-16 bg-background text-foreground flex flex-col font-sans select-none antialiased animate-fade-in">
-      {/* 1. LIVE INSTANT SEARCH */}
+      {/* 1. SEARCH BAR */}
       <section className="sticky top-0 z-30 px-8 py-4 backdrop-blur-xl bg-background/60 border-b border-border/40 flex flex-col md:flex-row gap-4 justify-between items-center transition-all duration-300">
-        {/* Global Search Bar */}
-        <div className="flex w-full md:w-96 items-center bg-muted/40 border border-border/40 rounded-full px-3 py-1 text-xs shadow-inner focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10 transition-all duration-300">
-          <Search className="size-4 text-muted-foreground/60 mr-2 shrink-0" />
-          <input
-            type="text"
-            placeholder="Search movies, TV shows, and genres..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 bg-transparent border-0 outline-hidden py-1.5 text-white placeholder-muted-foreground/60 w-full"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="p-1 rounded-full bg-white/5 hover:bg-white/10 text-muted-foreground cursor-pointer"
-            >
-              <X className="size-3" />
-            </button>
-          )}
-        </div>
+        <SearchBar
+          query={searchQuery}
+          onQueryChange={setSearchQuery}
+          type={searchType}
+          onTypeChange={setSearchType}
+          onClear={clearSearch}
+        />
       </section>
 
-      {/* 2. LIVE SEARCH RESULTS OVERLAY PANEL */}
-      {searchQuery && (
-        <section className="px-8 mt-4 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center justify-between mb-4 border-b border-border/30 pb-2">
-            <h2 className="text-md font-black tracking-tight text-white flex items-center gap-2">
-              <Search className="size-4.5 text-primary" />
-              <span>Search Results for &quot;{searchQuery}&quot;</span>
-            </h2>
-            <div className="flex gap-1">
-              {(['all', 'movie', 'tv'] as const).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setSearchType(type)}
-                  className={`px-3 py-1 rounded-full text-[10px] font-black uppercase cursor-pointer transition-all ${searchType === type ? 'bg-primary text-primary-foreground' : 'bg-muted/40 text-muted-foreground/70 hover:bg-muted hover:text-white'}`}
-                >
-                  {type === 'all' ? 'All Content' : type === 'movie' ? 'Movies' : 'TV Shows'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {isSearching ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="aspect-2/3 w-full rounded-xl bg-muted" />
-                  <Skeleton className="h-4 w-3/4 bg-muted" />
-                  <Skeleton className="h-3 w-1/2 bg-muted" />
-                </div>
-              ))}
-            </div>
-          ) : searchResults.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 bg-muted/10 border border-border/20 rounded-2xl text-center">
-              <AlertTriangle className="size-10 text-amber-500/60 mb-3 animate-bounce" />
-              <p className="text-sm font-bold text-white mb-1">No matches found.</p>
-              <p className="text-xs text-muted-foreground/60 max-w-sm">
-                Try searching for a different title, or check back later once new content is added.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {searchResults.map((item) => (
-                <div
-                  key={`${item.contentType}-${item.id}`}
-                  onClick={() => openMediaDetails(item)}
-                  className="group relative cursor-pointer overflow-hidden rounded-xl border border-border/40 hover:border-primary/20 bg-muted/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 shadow-2xs"
-                >
-                  <div className="aspect-2/3 w-full overflow-hidden bg-muted relative">
-                    {getPoster(item) ? (
-                      <img
-                        src={getPoster(item)}
-                        alt={item.title || item.name}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="h-full w-full bg-linear-to-br from-muted/50 to-background flex flex-col items-center justify-center p-3 text-center">
-                        {item.contentType === 'movie' ? (
-                          <Film className="size-8 text-muted-foreground/35 mb-2" />
-                        ) : (
-                          <Tv className="size-8 text-muted-foreground/35 mb-2" />
-                        )}
-                        <span className="text-[10px] font-black tracking-tight text-muted-foreground/75 truncate w-full">
-                          {item.title || item.name}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Hover play trigger */}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
-                      <PlayCircle className="size-11 text-primary drop-shadow-md shadow-primary" />
-                    </div>
-
-                    <Badge className="absolute top-2.5 right-2.5 bg-black/70 border border-white/10 text-[9px] font-black text-amber-400 gap-1 rounded-md px-1.5 py-0.5">
-                      <Star className="size-2.5 fill-amber-400 stroke-none" />
-                      <span>{item.voteAverage?.toFixed(1) || '0.0'}</span>
-                    </Badge>
-
-                    <Badge className="absolute bottom-2.5 left-2.5 bg-primary border-none text-[8px] font-black text-primary-foreground uppercase tracking-widest px-1.5 py-0.5 rounded-md">
-                      {item.contentType === 'movie' ? 'Movie' : 'TV Show'}
-                    </Badge>
-                  </div>
-                  <div className="p-3">
-                    <h3 className="font-extrabold text-xs tracking-tight text-white leading-tight truncate group-hover:text-primary transition-colors">
-                      {item.title || item.name}
-                    </h3>
-                    <p className="text-[9px] text-muted-foreground/60 mt-1">
-                      {item.releaseDate
-                        ? new Date(item.releaseDate).getFullYear()
-                        : item.firstAirDate
-                          ? new Date(item.firstAirDate).getFullYear()
-                          : 'N/A'}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <Separator className="bg-border/30 my-8" />
-        </section>
-      )}
+      {/* 2. SEARCH RESULTS */}
+      <SearchResultsPanel
+        query={searchQuery}
+        results={searchResults}
+        isSearching={isSearching}
+        getPosterUrl={getPoster}
+        onItemClick={openMediaDetails}
+      />
 
       {/* 4. VISUALLY STUNNING SPOTLIGHT FEATURED HERO BANNER */}
       <section className="px-8 mt-2 select-none relative z-10 shrink-0">

@@ -436,7 +436,7 @@
       "name": "Search",
       "item": [
         {
-          "name": "Global Search",
+          "name": "Search Results",
           "request": {
             "method": "GET",
             "header": [],
@@ -451,7 +451,8 @@
                 },
                 {
                   "key": "type",
-                  "value": "movie"
+                  "value": "movie",
+                  "description": "Filter by content type. Accepted values: movie, tv. Omit to search all types."
                 },
                 {
                   "key": "page",
@@ -463,7 +464,32 @@
                 }
               ]
             },
-            "description": "Searches for movies and TV shows matching the query string."
+            "description": "Results page — returns full MediaItem objects with all fields, paginated. Used for the /search results page."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Autocomplete",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/search/autocomplete?q=ava&type=movie",
+              "host": ["{{baseUrl}}"],
+              "path": ["search", "autocomplete"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "ava"
+                },
+                {
+                  "key": "type",
+                  "value": "movie",
+                  "description": "Filter by content type. Accepted values: movie, tv. Omit to search all types."
+                }
+              ]
+            },
+            "description": "Dropdown suggestions — returns up to 8 lightweight items with a similarity score. Used to power the search bar autocomplete dropdown."
           },
           "response": []
         }

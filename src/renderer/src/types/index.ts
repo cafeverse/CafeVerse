@@ -70,6 +70,29 @@ export interface MediaItem {
 }
 
 // ---------------------------------------------------------------------------
+// Search types
+// ---------------------------------------------------------------------------
+
+/** Filter scope for the /search and /search/autocomplete endpoints. */
+export type SearchType = 'all' | 'movie' | 'tv'
+
+/**
+ * Lightweight item shape returned by GET /search/autocomplete.
+ * Contains only the fields needed to render a dropdown suggestion row.
+ */
+export interface AutocompleteItem {
+  id: number
+  title?: string
+  name?: string
+  contentType: 'movie' | 'tv'
+  posterPath?: string
+  releaseDate?: string
+  firstAirDate?: string
+  /** Trigram similarity score returned by the API (0–1). */
+  similarity: number
+}
+
+// ---------------------------------------------------------------------------
 // API utility types
 // ---------------------------------------------------------------------------
 
