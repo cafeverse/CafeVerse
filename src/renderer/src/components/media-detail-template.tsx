@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Star, Check, AlertTriangle, Loader2 } from 'lucide-react'
+import { ChevronLeft, Star, AlertTriangle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { MediaItem, SeasonMeta, Episode } from '@/types'
@@ -178,32 +178,6 @@ export default function MediaDetailTemplate({
     return () => clearTimeout(timer)
   }, [isTv, currentSeason, media, seasons, setCurrentEpisode])
 
-  // Watchlist handling
-  const [watchlist, setWatchlist] = useState<MediaItem[]>(() => {
-    try {
-      const s = localStorage.getItem('cafeverse_watchlist')
-      return s ? JSON.parse(s) : []
-    } catch {
-      return []
-    }
-  })
-
-  const inWatchlist = media
-    ? watchlist.some((w) => w.id === media.id && w.contentType === media.contentType)
-    : false
-
-  const toggleWatchlist = useCallback(() => {
-    if (!media) return
-    setWatchlist((prev) => {
-      const exists = prev.some((w) => w.id === media.id && w.contentType === media.contentType)
-      const updated = exists
-        ? prev.filter((w) => !(w.id === media.id && w.contentType === media.contentType))
-        : [...prev, media]
-      localStorage.setItem('cafeverse_watchlist', JSON.stringify(updated))
-      return updated
-    })
-  }, [media])
-
   // Fetch details
   useEffect(() => {
     if (!slug) return
@@ -361,7 +335,7 @@ export default function MediaDetailTemplate({
         <div className="flex flex-col md:flex-row gap-12 lg:gap-24">
           {/* Left: Actions Card */}
           <div className="w-full md:w-64 shrink-0">
-            <div className="bg-muted/30 border border-border/10 rounded-3xl p-6 flex flex-col gap-8 backdrop-blur-xs">
+            <div className="bg-muted/30 border border-border/10 p-6 flex flex-col gap-8 backdrop-blur-xs">
               <div>
                 <div className="text-[10px] text-muted-foreground font-bold tracking-[0.2em] uppercase mb-2">
                   IMDb Rating
@@ -370,21 +344,6 @@ export default function MediaDetailTemplate({
                   {media.voteAverage?.toFixed(1) || '0.0'}
                   <Star className="size-6 text-amber-400 fill-amber-400" />
                 </div>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <Button
-                  variant="outline"
-                  onClick={toggleWatchlist}
-                  className={`w-full py-6 rounded-xl font-bold flex items-center justify-center gap-2 text-xs tracking-wide border-border/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-                    inWatchlist
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-transparent text-foreground/70 hover:bg-muted hover:text-foreground'
-                  }`}
-                >
-                  {inWatchlist ? <Check className="size-4" /> : <Star className="size-4" />}
-                  WATCHLIST
-                </Button>
               </div>
 
               {/* Extra Details */}
