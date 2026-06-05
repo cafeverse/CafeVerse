@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Star, Check, AlertTriangle } from 'lucide-react'
+import { ChevronLeft, Star, Check, AlertTriangle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { MediaItem } from '@/types'
+import type { MediaItem, SeasonMeta, Episode } from '@/types'
 import MediaPlayer from '@/components/media-player'
 
 const API_BASE = 'https://cafeverce-api.vercel.app'
@@ -75,6 +75,109 @@ export default function MediaDetailTemplate({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const isTv = contentType === 'tv'
+
+  // TV Show specific states
+  const [seasons, setSeasons] = useState<SeasonMeta[]>([])
+  const [episodes, setEpisodes] = useState<Episode[]>([])
+  const [currentSeason, setCurrentSeason] = useState(1)
+  const [currentEpisode, setCurrentEpisode] = useState(1)
+  const [loadingSeasons, setLoadingSeasons] = useState(false)
+  const [loadingEpisodes, setLoadingEpisodes] = useState(false)
+
+  // Fetch seasons for TV Show
+  useEffect(() => {
+    if (!isTv || !media) return
+    const timer = setTimeout(() => {
+      setLoadingSeasons(true)
+      const fetchSeasons = async (): Promise<void> => {
+        try {
+          const showId = media.id || media.tmdbId
+          const res = await fetch(`${API_BASE}/tv/${media.slug || showId}/seasons`).catch(() =>
+            fetch(`${API_BASE}/api/tvshows/${showId}/seasons`)
+          )
+          if (res.ok) {
+            const json = await res.json()
+            const data = Array.isArray(json) ? json : json.seasons || json.data || []
+            setSeasons(data)
+            if (data.length > 0) {
+              const hasSeason1 = data.find((s) => s.seasonNumber === 1)
+              if (hasSeason1) {
+                setCurrentSeason(1)
+              } else {
+                const firstValidSeason = data.find((s) => s.seasonNumber > 0)
+                setCurrentSeason(
+                  firstValidSeason ? firstValidSeason.seasonNumber : data[0].seasonNumber
+                )
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Failed to fetch seasons:', err)
+          // Fallback seasons generator
+          const count = media.numberOfSeasons || 1
+          const fallback = Array.from({ length: count }, (_, i) => ({
+            id: i + 1,
+            seasonNumber: i + 1,
+            name: `Season ${i + 1}`,
+            episodeCount: media.numberOfEpisodes ? Math.round(media.numberOfEpisodes / count) : 10
+          }))
+          setSeasons(fallback)
+        } finally {
+          setLoadingSeasons(false)
+        }
+      }
+      fetchSeasons()
+    }, 0)
+
+    return () => clearTimeout(timer)
+  }, [isTv, media, setCurrentSeason])
+
+  // Fetch episodes for selected Season
+  useEffect(() => {
+    if (!isTv || !media || currentSeason === undefined || currentSeason === null) return
+    const timer = setTimeout(() => {
+      setLoadingEpisodes(true)
+      const fetchEpisodes = async (): Promise<void> => {
+        try {
+          const showId = media.id || media.tmdbId
+          let res = await fetch(
+            `${API_BASE}/tv/${media.slug || showId}/seasons/${currentSeason}/episodes`
+          )
+          if (!res.ok) {
+            res = await fetch(`${API_BASE}/api/tvshows/${showId}/seasons/${currentSeason}`)
+          }
+          if (res.ok) {
+            const json = await res.json()
+            const data = Array.isArray(json) ? json : json.episodes || json.items || json.data || []
+            setEpisodes(data)
+            if (data.length > 0) {
+              setCurrentEpisode(data[0].episodeNumber)
+            }
+          }
+        } catch (err) {
+          console.error('Failed to fetch episodes:', err)
+          // Fallback episodes generator
+          const targetSeason = seasons.find((s) => s.seasonNumber === currentSeason)
+          const count = targetSeason?.episodeCount || 10
+          const fallback = Array.from({ length: count }, (_, i) => ({
+            id: i + 1,
+            episodeNumber: i + 1,
+            seasonNumber: currentSeason,
+            name: `Episode ${i + 1}`,
+            overview: `Episode ${i + 1} of Season ${currentSeason}.`
+          }))
+          setEpisodes(fallback)
+        } finally {
+          setLoadingEpisodes(false)
+        }
+      }
+      fetchEpisodes()
+    }, 0)
+
+    return () => clearTimeout(timer)
+  }, [isTv, currentSeason, media, seasons, setCurrentEpisode])
+
   // Watchlist handling
   const [watchlist, setWatchlist] = useState<MediaItem[]>(() => {
     try {
@@ -108,6 +211,10 @@ export default function MediaDetailTemplate({
       setLoading(true)
       setError(null)
       setMedia(null)
+      setSeasons([])
+      setEpisodes([])
+      setCurrentSeason(1)
+      setCurrentEpisode(1)
 
       const tryFetch = async (): Promise<void> => {
         const pathSegment = contentType === 'movie' ? 'movies' : 'tv'
@@ -142,31 +249,6 @@ export default function MediaDetailTemplate({
 
     return () => clearTimeout(timer)
   }, [slug, contentType])
-
-  // Discord RPC Rich Presence Update
-  useEffect(() => {
-    if (!media) return
-
-    const posterUrl = media.posterPath
-      ? media.posterPath.startsWith('http')
-        ? media.posterPath
-        : `https://image.tmdb.org/t/p/w500${media.posterPath.startsWith('/') ? '' : '/'}${media.posterPath}`
-      : 'logo'
-
-    window.api?.discord?.updateActivity({
-      details: media.title || media.name,
-      state: contentType === 'movie' ? 'Watching a Movie' : 'Watching a TV Show',
-      startTimestamp: Date.now(),
-      largeImageKey: posterUrl,
-      largeImageText: media.title || media.name,
-      smallImageKey: 'logo',
-      smallImageText: 'CaféVerse'
-    })
-
-    return () => {
-      window.api?.discord?.clearActivity()
-    }
-  }, [media, contentType])
 
   if (loading) {
     return (
@@ -361,8 +443,116 @@ export default function MediaDetailTemplate({
           </div>
         </div>
 
-        <div className="w-full aspect-video overflow-hidden bg-black border border-border/10">
-          <MediaPlayer item={media} />
+        <div className="space-y-6">
+          <div className="w-full aspect-video overflow-hidden bg-black border border-border/10">
+            <MediaPlayer
+              item={media}
+              currentSeason={currentSeason}
+              currentEpisode={currentEpisode}
+              onSeasonChange={setCurrentSeason}
+              onEpisodeChange={setCurrentEpisode}
+              showSelectors={false}
+            />
+          </div>
+
+          {/* TV Season / Episode selectors */}
+          {isTv && seasons.length > 0 && (
+            <div className="space-y-6 bg-muted/5 border border-border/10 p-6 animate-in fade-in duration-500 rounded-3xl">
+              {seasons.length > 1 && (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <span className="text-[9.5px] uppercase tracking-[0.25em] text-primary font-black block">
+                      Browse Series Seasons
+                    </span>
+                    <h4 className="text-sm font-black text-white">Select Season</h4>
+                  </div>
+
+                  {/* Season selection horizontal scroll */}
+                  {loadingSeasons ? (
+                    <div className="py-2 flex justify-start">
+                      <Loader2 className="size-4 animate-spin text-primary" />
+                    </div>
+                  ) : (
+                    <div
+                      onWheel={(e) => {
+                        if (e.deltaY !== 0) {
+                          e.currentTarget.scrollLeft += e.deltaY
+                        }
+                      }}
+                      className="flex gap-2 overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20 scrollbar-track-transparent"
+                    >
+                      {seasons.map((s) => {
+                        const isActive = s.seasonNumber === currentSeason
+                        return (
+                          <button
+                            key={s.seasonNumber}
+                            onClick={() => {
+                              setCurrentSeason(s.seasonNumber)
+                            }}
+                            className={`px-4 py-2 text-[10px] font-black uppercase tracking-wider border rounded-xl whitespace-nowrap cursor-pointer transition-all ${
+                              isActive
+                                ? 'bg-primary text-primary-foreground border-primary'
+                                : 'bg-muted/30 text-white/70 border-border/20 hover:bg-muted hover:text-white'
+                            }`}
+                          >
+                            {s.name}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div
+                className={
+                  seasons.length > 1 ? 'border-t border-border/10 pt-6 space-y-3' : 'space-y-3'
+                }
+              >
+                <div className="space-y-1">
+                  <span className="text-[9.5px] uppercase tracking-[0.25em] text-primary font-black block">
+                    Choose Episode
+                  </span>
+                  <h4 className="text-sm font-black text-white">Episodes</h4>
+                </div>
+
+                {/* Episode items grid */}
+                {loadingEpisodes ? (
+                  <div className="py-8 flex justify-center">
+                    <Loader2 className="size-6 text-primary animate-spin" />
+                  </div>
+                ) : episodes.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    No episodes found for this season.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 max-h-56 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+                    {episodes.map((ep) => {
+                      const isActive = ep.episodeNumber === currentEpisode
+                      return (
+                        <button
+                          key={ep.id}
+                          onClick={() => {
+                            setCurrentEpisode(ep.episodeNumber)
+                          }}
+                          className={`p-3 text-[10px] font-extrabold text-left border rounded-xl transition-all cursor-pointer truncate ${
+                            isActive
+                              ? 'bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20'
+                              : 'bg-muted/40 text-white/80 border-border/25 hover:bg-muted hover:text-white hover:border-border/50'
+                          }`}
+                        >
+                          <span className="block text-[8px] opacity-60 uppercase mb-0.5 tracking-wider">
+                            Episode {ep.episodeNumber}
+                          </span>
+                          <span className="block truncate">{ep.name}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {media.cast && media.cast.length > 0 && (

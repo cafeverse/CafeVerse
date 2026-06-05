@@ -6,9 +6,21 @@ const API_BASE = 'https://cafeverce-api.vercel.app'
 
 export interface MediaPlayerProps {
   item: MediaItem
+  currentSeason?: number
+  currentEpisode?: number
+  onSeasonChange?: (season: number) => void
+  onEpisodeChange?: (episode: number) => void
+  showSelectors?: boolean
 }
 
-export default function MediaPlayer({ item }: MediaPlayerProps): React.JSX.Element {
+export default function MediaPlayer({
+  item,
+  currentSeason: propSeason,
+  currentEpisode: propEpisode,
+  onSeasonChange,
+  onEpisodeChange,
+  showSelectors = true
+}: MediaPlayerProps): React.JSX.Element {
   const isTv = item.contentType === 'tv'
 
   // Player & Iframe states
@@ -17,8 +29,15 @@ export default function MediaPlayer({ item }: MediaPlayerProps): React.JSX.Eleme
   // TV Show specific states
   const [seasons, setSeasons] = useState<SeasonMeta[]>([])
   const [episodes, setEpisodes] = useState<Episode[]>([])
-  const [currentSeason, setCurrentSeason] = useState(1)
-  const [currentEpisode, setCurrentEpisode] = useState(1)
+  const [localSeason, setLocalSeason] = useState(1)
+  const [localEpisode, setLocalEpisode] = useState(1)
+
+  const currentSeason = propSeason !== undefined ? propSeason : localSeason
+  const currentEpisode = propEpisode !== undefined ? propEpisode : localEpisode
+
+  const setCurrentSeason = onSeasonChange || setLocalSeason
+  const setCurrentEpisode = onEpisodeChange || setLocalEpisode
+
   const [loadingSeasons, setLoadingSeasons] = useState(false)
   const [loadingEpisodes, setLoadingEpisodes] = useState(false)
 
@@ -40,7 +59,15 @@ export default function MediaPlayer({ item }: MediaPlayerProps): React.JSX.Eleme
             const data = Array.isArray(json) ? json : json.seasons || json.data || []
             setSeasons(data)
             if (data.length > 0) {
-              setCurrentSeason(data[0].seasonNumber)
+              const hasSeason1 = data.find((s) => s.seasonNumber === 1)
+              if (hasSeason1) {
+                setCurrentSeason(1)
+              } else {
+                const firstValidSeason = data.find((s) => s.seasonNumber > 0)
+                setCurrentSeason(
+                  firstValidSeason ? firstValidSeason.seasonNumber : data[0].seasonNumber
+                )
+              }
             }
           }
         } catch (err) {
@@ -62,11 +89,11 @@ export default function MediaPlayer({ item }: MediaPlayerProps): React.JSX.Eleme
     }, 0)
 
     return () => clearTimeout(timer)
-  }, [isTv, item])
+  }, [isTv, item, setCurrentSeason])
 
   // Fetch episodes for selected Season
   useEffect(() => {
-    if (!isTv || !currentSeason) return
+    if (!isTv || currentSeason === undefined || currentSeason === null) return
     const timer = setTimeout(() => {
       setLoadingEpisodes(true)
       const fetchEpisodes = async (): Promise<void> => {
@@ -107,7 +134,39 @@ export default function MediaPlayer({ item }: MediaPlayerProps): React.JSX.Eleme
     }, 0)
 
     return () => clearTimeout(timer)
-  }, [isTv, currentSeason, item, seasons])
+  }, [isTv, currentSeason, item, seasons, setCurrentEpisode])
+
+  // Discord RPC Rich Presence Update
+  useEffect(() => {
+    if (!item) return
+
+    const posterUrl = item.posterPath
+      ? item.posterPath.startsWith('http')
+        ? item.posterPath
+        : `https://image.tmdb.org/t/p/w500${item.posterPath.startsWith('/') ? '' : '/'}${item.posterPath}`
+      : 'logo'
+
+    const details = item.title || item.name
+    const state = isTv ? `Season ${currentSeason}, Episode ${currentEpisode}` : 'Watching a Movie'
+
+    window.api?.discord?.updateActivity({
+      details,
+      state,
+      startTimestamp: Date.now(),
+      largeImageKey: posterUrl,
+      largeImageText: details,
+      smallImageKey: 'logo',
+      smallImageText: 'CaféVerse'
+    })
+  }, [item, isTv, currentSeason, currentEpisode])
+
+  // Clear RPC on Unmount
+  useEffect(() => {
+    return () => {
+      window.api?.discord?.clearActivity()
+    }
+  }, [])
+
   const mediaId = item.imdbId
   const embedUrl = isTv
     ? `https://vaplayer.ru/embed/tv/${mediaId}/${currentSeason}/${currentEpisode}`
@@ -141,7 +200,7 @@ export default function MediaPlayer({ item }: MediaPlayerProps): React.JSX.Eleme
       </div>
 
       {/* TV Season / Episode selectors below screen */}
-      {isTv && seasons.length > 0 && (
+      {isTv && showSelectors && seasons.length > 0 && (
         <div className="space-y-4 bg-muted/5 border border-border/10 p-5 animate-in fade-in duration-500">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/10 pb-4">
             <div className="space-y-1">

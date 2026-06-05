@@ -240,7 +240,9 @@ export function AutocompletePanel({
                     {year && (
                       <>
                         <span className="text-muted-foreground/25 text-[8px]">·</span>
-                        <span className="text-[9px] text-muted-foreground/45 font-bold">{year}</span>
+                        <span className="text-[9px] text-muted-foreground/45 font-bold">
+                          {year}
+                        </span>
                       </>
                     )}
                   </div>
@@ -261,4 +263,3 @@ export function AutocompletePanel({
     </div>
   )
 }
-

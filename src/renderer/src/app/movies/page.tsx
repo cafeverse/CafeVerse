@@ -244,8 +244,6 @@ export default function MoviesPage(): React.JSX.Element {
   const [featuredIdx, setFeaturedIdx] = useState(0)
   const spotlightRef = useRef<NodeJS.Timeout | null>(null)
 
-
-
   // ── Watchlist ─────────────────────────────────────────────────────────────
   const [watchlist, setWatchlist] = useState<MediaItem[]>(() => {
     try {
@@ -345,8 +343,6 @@ export default function MoviesPage(): React.JSX.Element {
     }, 0)
     return () => clearTimeout(timer)
   }, [selectedGenre, sortOption])
-
-
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const spotlight = featured[featuredIdx]
@@ -541,9 +537,7 @@ export default function MoviesPage(): React.JSX.Element {
           <div className="py-24 flex flex-col items-center justify-center gap-3 border border-dashed border-border/20 rounded-2xl bg-muted/5">
             <Film className="size-12 text-muted-foreground/20" />
             <div className="text-center">
-              <p className="text-sm font-bold text-white/50 mb-1">
-                No movies found.
-              </p>
+              <p className="text-sm font-bold text-white/50 mb-1">No movies found.</p>
               <p className="text-xs text-muted-foreground/40">
                 Try a different genre or sort option.
               </p>

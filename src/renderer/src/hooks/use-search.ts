@@ -153,4 +153,3 @@ export function useSearch(): UseSearchReturn {
     isAutocompleting
   }
 }
-
