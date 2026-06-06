@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import type { MediaItem, MetaPagination } from '@/types'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -479,21 +480,24 @@ export default function TvShowsPage(): React.JSX.Element {
       {/* ── 3. Genre filter pills ─────────────────────────────────────────── */}
       {genres.length > 0 && (
         <section className="px-6 pt-5">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <GenreChip
-              label="All"
-              active={selectedGenre === null}
-              onClick={() => setSelectedGenre(null)}
-            />
-            {genres.map((g) => (
+          <ScrollArea className="w-full whitespace-nowrap pb-2.5">
+            <div className="flex gap-2 pb-1">
               <GenreChip
-                key={g}
-                label={g}
-                active={selectedGenre === g}
-                onClick={() => setSelectedGenre(selectedGenre === g ? null : g)}
+                label="All"
+                active={selectedGenre === null}
+                onClick={() => setSelectedGenre(null)}
               />
-            ))}
-          </div>
+              {genres.map((g) => (
+                <GenreChip
+                  key={g}
+                  label={g}
+                  active={selectedGenre === g}
+                  onClick={() => setSelectedGenre(selectedGenre === g ? null : g)}
+                />
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" className="bg-muted/10" />
+          </ScrollArea>
         </section>
       )}
 

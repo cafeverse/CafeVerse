@@ -21,9 +21,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import type { MediaItem, MetaPagination } from '@/types'
-
-// ─── Constants ───────────────────────────────────────────────────────────────
 
 const API_BASE = 'https://cafeverce-api.vercel.app'
 const TMDB_W500 = 'https://image.tmdb.org/t/p/w500'
@@ -282,10 +281,16 @@ export default function MoviesPage(): React.JSX.Element {
   useEffect(() => {
     fetchApi('/movies/genres')
       .then((data) => {
-        if (Array.isArray(data)) setGenres(data as string[])
-        else if (data && typeof data === 'object') {
+        if (data && typeof data === 'object') {
           const obj = data as Record<string, unknown>
-          if (Array.isArray(obj.data)) setGenres(obj.data as string[])
+          const resolved = Array.isArray(obj.genres)
+            ? obj.genres.map((g) => (typeof g === 'string' ? g : (g as { name: string }).name))
+            : Array.isArray(obj.data)
+              ? obj.data.map((g) => (typeof g === 'string' ? g : (g as { name: string }).name))
+              : []
+          setGenres(resolved)
+        } else if (Array.isArray(data)) {
+          setGenres(data.map((g) => (typeof g === 'string' ? g : (g as { name: string }).name)))
         }
       })
       .catch(() => {})
@@ -474,21 +479,24 @@ export default function MoviesPage(): React.JSX.Element {
       {/* ── 3. Genre filter pills ─────────────────────────────────────────── */}
       {genres.length > 0 && (
         <section className="px-6 pt-5">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <GenreChip
-              label="All"
-              active={selectedGenre === null}
-              onClick={() => setSelectedGenre(null)}
-            />
-            {genres.map((g) => (
+          <ScrollArea className="w-full whitespace-nowrap pb-2.5">
+            <div className="flex gap-2 pb-1">
               <GenreChip
-                key={g}
-                label={g}
-                active={selectedGenre === g}
-                onClick={() => setSelectedGenre(selectedGenre === g ? null : g)}
+                label="All"
+                active={selectedGenre === null}
+                onClick={() => setSelectedGenre(null)}
               />
-            ))}
-          </div>
+              {genres.map((g) => (
+                <GenreChip
+                  key={g}
+                  label={g}
+                  active={selectedGenre === g}
+                  onClick={() => setSelectedGenre(selectedGenre === g ? null : g)}
+                />
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" className="bg-muted/10" />
+          </ScrollArea>
         </section>
       )}
 
