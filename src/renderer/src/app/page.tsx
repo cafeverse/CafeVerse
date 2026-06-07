@@ -37,23 +37,29 @@ export default function DashboardPage(): React.JSX.Element {
 
   const [trendingMovies, setTrendingMovies] = useState<MediaItem[]>([])
   const [trendingTv, setTrendingTv] = useState<MediaItem[]>([])
+  const [trendingAnime, setTrendingAnime] = useState<MediaItem[]>([])
   const [recentMovies, setRecentMovies] = useState<MediaItem[]>([])
   const [recentTv, setRecentTv] = useState<MediaItem[]>([])
+  const [recentAnime, setRecentAnime] = useState<MediaItem[]>([])
 
   const [loading, setLoading] = useState<Record<string, boolean>>({
     featured: true,
     trendingMovies: true,
     trendingTv: true,
+    trendingAnime: true,
     recentMovies: true,
-    recentTv: true
+    recentTv: true,
+    recentAnime: true
   })
 
   const [errors, setErrors] = useState<Record<string, string | null>>({
     featured: null,
     trendingMovies: null,
     trendingTv: null,
+    trendingAnime: null,
     recentMovies: null,
-    recentTv: null
+    recentTv: null,
+    recentAnime: null
   })
 
   // 4. Watchlist state (persisted to localStorage)
@@ -147,15 +153,19 @@ export default function DashboardPage(): React.JSX.Element {
       featured: true,
       trendingMovies: true,
       trendingTv: true,
+      trendingAnime: true,
       recentMovies: true,
-      recentTv: true
+      recentTv: true,
+      recentAnime: true
     })
     setErrors({
       featured: null,
       trendingMovies: null,
       trendingTv: null,
+      trendingAnime: null,
       recentMovies: null,
-      recentTv: null
+      recentTv: null,
+      recentAnime: null
     })
 
     const resolveList = (res: unknown): MediaItem[] => {
@@ -171,11 +181,16 @@ export default function DashboardPage(): React.JSX.Element {
 
     // 1. Load Featured Titles
     try {
-      const [featMovies, featTv] = await Promise.all([
+      const [featMovies, featTv, featAnime] = await Promise.all([
         fetchFromApi('/movies/featured').catch(() => []),
-        fetchFromApi('/tv/featured').catch(() => [])
+        fetchFromApi('/tv/featured').catch(() => []),
+        fetchFromApi('/anime/featured').catch(() => [])
       ])
-      const combined = [...resolveList(featMovies), ...resolveList(featTv)]
+      const combined = [
+        ...resolveList(featMovies),
+        ...resolveList(featTv),
+        ...resolveList(featAnime).map((item) => ({ ...item, contentType: 'anime' as const }))
+      ]
       if (combined.length > 0) {
         setFeaturedMedia(combined)
         setErrors((prev) => ({ ...prev, featured: null }))
@@ -203,14 +218,25 @@ export default function DashboardPage(): React.JSX.Element {
     ): Promise<void> => {
       try {
         const res = await fetchFromApi(endpoint)
-        const list = resolveList(res)
+        let list = resolveList(res)
+        if (endpoint.includes('anime')) {
+          list = list.map((item) => ({ ...item, contentType: 'anime' }))
+        }
         setData(list)
       } catch {
         // Safe degrade to general search / index endpoints
         try {
-          const fallbackPath = endpoint.includes('movies') ? '/movies?limit=20' : '/tv?limit=20'
+          const fallbackPath = endpoint.includes('movies')
+            ? '/movies?limit=20'
+            : endpoint.includes('anime')
+              ? '/anime?limit=20'
+              : '/tv?limit=20'
           const res = await fetchFromApi(fallbackPath)
-          setData(resolveList(res))
+          let list = resolveList(res)
+          if (endpoint.includes('anime') || fallbackPath.includes('anime')) {
+            list = list.map((item) => ({ ...item, contentType: 'anime' }))
+          }
+          setData(list)
         } catch {
           setErrors((prev) => ({ ...prev, [rowKey]: `Could not load row data` }))
         }
@@ -222,8 +248,10 @@ export default function DashboardPage(): React.JSX.Element {
     // Trigger all content rows parallelly
     fetchRow('/movies/trending', setTrendingMovies, 'trendingMovies')
     fetchRow('/tv/trending', setTrendingTv, 'trendingTv')
+    fetchRow('/anime/trending', setTrendingAnime, 'trendingAnime')
     fetchRow('/movies/recently-added', setRecentMovies, 'recentMovies')
     fetchRow('/tv/recently-added', setRecentTv, 'recentTv')
+    fetchRow('/anime/recently-added', setRecentAnime, 'recentAnime')
   }, [fetchFromApi])
 
   // Setup auto-play spotlight cycle
@@ -253,6 +281,8 @@ export default function DashboardPage(): React.JSX.Element {
     const slug = getSlug(media)
     if (media.contentType === 'tv') {
       navigate(`/tv/${slug}`)
+    } else if (media.contentType === 'anime') {
+      navigate(`/anime/${slug}`)
     } else {
       navigate(`/movies/${slug}`)
     }
@@ -462,12 +492,24 @@ export default function DashboardPage(): React.JSX.Element {
             },
             { title: 'Trending TV Shows', data: trendingTv, key: 'trendingTv', icon: Tv },
             {
+              title: 'Trending Anime',
+              data: trendingAnime,
+              key: 'trendingAnime',
+              icon: Sparkles
+            },
+            {
               title: 'Recently Added Movies',
               data: recentMovies,
               key: 'recentMovies',
               icon: Clock
             },
-            { title: 'Recently Added TV Shows', data: recentTv, key: 'recentTv', icon: Sparkles }
+            { title: 'Recently Added TV Shows', data: recentTv, key: 'recentTv', icon: Sparkles },
+            {
+              title: 'Recently Added Anime',
+              data: recentAnime,
+              key: 'recentAnime',
+              icon: Clock
+            }
           ] as const
         ).map((row) => (
           <MediaRow

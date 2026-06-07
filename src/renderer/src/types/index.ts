@@ -52,7 +52,7 @@ export interface MediaItem {
   voteCount: number
   popularity: number
   status: string
-  contentType: 'movie' | 'tv'
+  contentType: 'movie' | 'tv' | 'anime'
   createdAt: string
   tagline?: string
   budget?: number
@@ -84,7 +84,7 @@ export interface AutocompleteItem {
   id: number
   title?: string
   name?: string
-  contentType: 'movie' | 'tv'
+  contentType: 'movie' | 'tv' | 'anime'
   posterPath?: string
   releaseDate?: string
   firstAirDate?: string

@@ -10,7 +10,7 @@ const API_BASE = 'https://cafeverce-api.vercel.app'
 const TMDB_ORIG = 'https://image.tmdb.org/t/p/original'
 
 interface MediaDetailTemplateProps {
-  contentType: 'movie' | 'tv'
+  contentType: 'movie' | 'tv' | 'anime'
 }
 
 const getBackdrop = (item: MediaItem): string => {
@@ -20,7 +20,7 @@ const getBackdrop = (item: MediaItem): string => {
   return `${TMDB_ORIG}${p}`
 }
 
-const resolveItem = (res: unknown, type: 'movie' | 'tv'): MediaItem | null => {
+const resolveItem = (res: unknown, type: 'movie' | 'tv' | 'anime'): MediaItem | null => {
   if (res && typeof res === 'object') {
     const obj = res as Record<string, unknown>
 
@@ -36,6 +36,8 @@ const resolveItem = (res: unknown, type: 'movie' | 'tv'): MediaItem | null => {
     } else {
       if (obj.tvShow && typeof obj.tvShow === 'object')
         itemObj = obj.tvShow as Record<string, unknown>
+      else if (obj.anime && typeof obj.anime === 'object')
+        itemObj = obj.anime as Record<string, unknown>
       else if (obj.media && typeof obj.media === 'object')
         itemObj = obj.media as Record<string, unknown>
       else if (obj.movie && typeof obj.movie === 'object')
@@ -75,7 +77,7 @@ export default function MediaDetailTemplate({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const isTv = contentType === 'tv'
+  const isTv = contentType === 'tv' || contentType === 'anime'
 
   // TV Show specific states
   const [seasons, setSeasons] = useState<SeasonMeta[]>([])
@@ -191,7 +193,8 @@ export default function MediaDetailTemplate({
       setCurrentEpisode(1)
 
       const tryFetch = async (): Promise<void> => {
-        const pathSegment = contentType === 'movie' ? 'movies' : 'tv'
+        const pathSegment =
+          contentType === 'movie' ? 'movies' : contentType === 'tv' ? 'tv' : 'anime'
         const res1 = await fetch(`${API_BASE}/${pathSegment}/${slug}`)
         if (res1.ok) {
           const item = resolveItem(await res1.json(), contentType)
@@ -209,13 +212,15 @@ export default function MediaDetailTemplate({
             return
           }
         }
-        throw new Error(`${contentType === 'movie' ? 'Movie' : 'TV Show'} not found`)
+        throw new Error(
+          `${contentType === 'movie' ? 'Movie' : contentType === 'tv' ? 'TV Show' : 'Anime'} not found`
+        )
       }
 
       tryFetch()
         .catch(() =>
           setError(
-            `We could not find this ${contentType === 'movie' ? 'movie' : 'TV show'}. It may have been removed or the link is incorrect.`
+            `We could not find this ${contentType === 'movie' ? 'movie' : contentType === 'tv' ? 'TV show' : 'anime'}. It may have been removed or the link is incorrect.`
           )
         )
         .finally(() => setLoading(false))
@@ -246,12 +251,15 @@ export default function MediaDetailTemplate({
         <AlertTriangle className="size-14 text-destructive/50" />
         <div className="text-center">
           <h2 className="text-lg font-black mb-2">
-            {contentType === 'movie' ? 'Movie' : 'TV Show'} Not Found
+            {contentType === 'movie' ? 'Movie' : contentType === 'tv' ? 'TV Show' : 'Anime'} Not
+            Found
           </h2>
           <p className="text-xs text-muted-foreground max-w-sm">{error}</p>
         </div>
         <Button
-          onClick={() => navigate(contentType === 'movie' ? '/movies' : '/')}
+          onClick={() =>
+            navigate(contentType === 'movie' ? '/movies' : contentType === 'tv' ? '/' : '/anime')
+          }
           className="bg-primary text-primary-foreground font-black rounded-xl px-5 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <ChevronLeft className="size-4" /> Back to Home
@@ -287,7 +295,9 @@ export default function MediaDetailTemplate({
 
         {/* Back button */}
         <button
-          onClick={() => navigate(contentType === 'movie' ? '/movies' : '/')}
+          onClick={() =>
+            navigate(contentType === 'movie' ? '/movies' : contentType === 'tv' ? '/' : '/anime')
+          }
           className="absolute top-6 left-6 md:left-12 z-20 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-background/40 border border-border/20 hover:bg-background/60 text-foreground/85 hover:text-foreground text-[11px] font-bold tracking-widest uppercase cursor-pointer backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <ChevronLeft className="size-4" />

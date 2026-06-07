@@ -14,7 +14,8 @@ import {
   Heart,
   History,
   Home,
-  Search
+  Search,
+  Sparkles
 } from 'lucide-react'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
@@ -173,6 +174,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ setOpen }) => (
           <MobileNavItem to="/" icon={Home} label="Home" onClick={() => setOpen(false)} end />
           <MobileNavItem to="/movies" icon={Film} label="Movies" onClick={() => setOpen(false)} />
           <MobileNavItem to="/tvshows" icon={Tv} label="TV Shows" onClick={() => setOpen(false)} />
+          <MobileNavItem to="/anime" icon={Sparkles} label="Anime" onClick={() => setOpen(false)} />
         </div>
       </div>
 
@@ -251,6 +253,8 @@ export const Navbar: React.FC<NavbarProps> = ({ updateAvailable }) => {
     const slug = media.slug || String(media.id)
     if (media.contentType === 'tv') {
       navigate(`/tv/${slug}`)
+    } else if (media.contentType === 'anime') {
+      navigate(`/anime/${slug}`)
     } else {
       navigate(`/movies/${slug}`)
     }
@@ -261,6 +265,8 @@ export const Navbar: React.FC<NavbarProps> = ({ updateAvailable }) => {
     const slug = String(item.id)
     if (item.contentType === 'tv') {
       navigate(`/tv/${slug}`)
+    } else if (item.contentType === 'anime') {
+      navigate(`/anime/${slug}`)
     } else {
       navigate(`/movies/${slug}`)
     }
@@ -291,6 +297,7 @@ export const Navbar: React.FC<NavbarProps> = ({ updateAvailable }) => {
           <DesktopNavItem to="/" icon={Home} label="Home" end />
           <DesktopNavItem to="/movies" icon={Film} label="Movies" />
           <DesktopNavItem to="/tvshows" icon={Tv} label="TV Shows" />
+          <DesktopNavItem to="/anime" icon={Sparkles} label="Anime" />
           <DesktopNavItem to="/history" icon={History} label="History" />
         </nav>
 
@@ -434,7 +441,7 @@ export const Navbar: React.FC<NavbarProps> = ({ updateAvailable }) => {
 
       {/* Global Search Modal */}
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden bg-background border-border/40 gap-0">
+        <DialogContent className="sm:max-w-200 p-0 overflow-hidden bg-background border-border/40 gap-0">
           <DialogTitle className="sr-only">Global Search</DialogTitle>
           <div className="p-4 border-b border-border/40 bg-muted/10">
             <SearchBar
