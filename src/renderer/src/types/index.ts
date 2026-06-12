@@ -5,7 +5,7 @@ import type { cleanReleaseNotes } from '@/lib/utils'
 // Media types
 // ---------------------------------------------------------------------------
 
-export type SortKey = 'popularity' | 'voteAverage' | 'releaseDate' | 'title'
+export type SortKey = 'popularity' | 'voteAverage' | 'releaseDate' | 'title' | 'createdAt'
 export type SortOrder = 'asc' | 'desc'
 
 export interface SortOption {

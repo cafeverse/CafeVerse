@@ -56,8 +56,8 @@ function SortButton({
 interface GenreFilterProps {
   /** List of available genre names */
   genres: string[]
-  /** Currently selected genre, or null for "All" */
-  selectedGenre: string | null
+  /** Currently selected genres */
+  selectedGenres: string[]
   /** Called when the user picks a genre (null = "All") */
   onGenreChange: (genre: string | null) => void
   /** Available sort presets */
@@ -76,7 +76,7 @@ interface GenreFilterProps {
 
 export default function GenreFilter({
   genres,
-  selectedGenre,
+  selectedGenres,
   onGenreChange,
   sortOptions,
   activeSortOption,
@@ -111,15 +111,15 @@ export default function GenreFilter({
             <div className="flex gap-2 pb-1">
               <GenreChip
                 label="All"
-                active={selectedGenre === null}
+                active={selectedGenres.length === 0}
                 onClick={() => onGenreChange(null)}
               />
               {genres.map((g) => (
                 <GenreChip
                   key={g}
                   label={g}
-                  active={selectedGenre === g}
-                  onClick={() => onGenreChange(selectedGenre === g ? null : g)}
+                  active={selectedGenres.includes(g)}
+                  onClick={() => onGenreChange(g)}
                 />
               ))}
             </div>
@@ -132,14 +132,14 @@ export default function GenreFilter({
       <section className="px-6 pt-6 pb-3 flex items-center justify-between">
         <h2 className="text-sm font-black tracking-tight text-white flex items-center gap-2">
           <Sparkles className="size-4 text-primary" />
-          {selectedGenre ? `${selectedGenre} ${contentLabel}` : `All ${contentLabel}`}
+          {selectedGenres.length > 0 ? `${selectedGenres.join(' + ')} ${contentLabel}` : `All ${contentLabel}`}
           {totalItems != null && (
             <span className="text-[10px] text-muted-foreground/40 font-bold ml-1">
               ({totalItems.toLocaleString()})
             </span>
           )}
         </h2>
-        {selectedGenre && (
+        {selectedGenres.length > 0 && (
           <button
             onClick={() => onGenreChange(null)}
             className="text-[10px] text-muted-foreground/50 hover:text-white font-bold flex items-center gap-1 cursor-pointer transition-colors"
