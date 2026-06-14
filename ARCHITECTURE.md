@@ -1,121 +1,141 @@
-# CaféVerse Optimized Architecture
+# CaféVerse High-Reliability Architecture
 
-This document outlines a high-performance, scalable architecture for CaféVerse, focusing on **minimum development cost** while providing paths for advanced optimizations (Multi-API, Multi-DB, and Scaling).
+This document defines a high-availability, fault-tolerant system architecture for CaféVerse. The primary focus is **Reliability, Data Integrity, and Observability**, utilizing a multi-paradigm database and API strategy.
 
 ---
 
-## 1. Hybrid System Architecture
+## 1. High-Availability (HA) Architecture
 
-To achieve high performance with low dev cost, we utilize a **Multi-Layered** approach.
+We move from a single-point-of-failure model to a **Multi-Region / Multi-Zone Redundancy** model.
 
 ```mermaid
 graph TD
     User((User))
-    Electron[Electron App]
+    DNS[Global Load Balancer / Edge Routing]
 
-    subgraph "API Layer (NestJS / Vercel)"
-        REST[REST API - Fast CRUD]
-        GQL[GraphQL - Complex Queries]
-        WS[WebSockets - Real-time]
+    subgraph "Region A (Primary)"
+        API_A[Serverless Compute - NestJS]
+        PG_Primary[(PostgreSQL Primary)]
+        Redis_A[(Redis Cluster)]
     end
 
-    subgraph "Data Layer (Multi-DB Strategy)"
-        PG[(PostgreSQL - Drizzle)]
-        Redis[(Redis - Caching)]
-        Mongo[(MongoDB - Metadata Logs)]
+    subgraph "Region B (Failover)"
+        API_B[Serverless Compute - NestJS]
+        PG_Replica[(PostgreSQL Read Replica)]
+        Redis_B[(Redis Replica)]
     end
 
-    User --> Electron
-    Electron --> REST
-    Electron --> GQL
-    Electron --> WS
+    subgraph "Analytics & Discovery"
+        Neo4j[(Neo4j - Graph DB)]
+        Mongo[(MongoDB - Metadata)]
+    end
 
-    REST --> PG
-    GQL --> PG
-    REST --> Redis
-    WS --> Redis
-    REST --> Mongo
+    User --> DNS
+    DNS -->|Primary| API_A
+    DNS -.->|Failover| API_B
+
+    API_A --> PG_Primary
+    API_A --> Redis_A
+    API_A --> Neo4j
+    API_A --> Mongo
+
+    PG_Primary -->|Async Replication| PG_Replica
+    Redis_A -->|Sync Replication| Redis_B
 ```
 
 ---
 
-## 2. API Design Strategy (Minimum Cost)
+## 2. Reliability Pillars
 
-Instead of building everything from scratch, we use multiple API patterns for specific needs:
+### I. Data Persistence & Integrity
+- **PostgreSQL Multi-AZ:** Use a managed service (e.g., AWS RDS or GCP Cloud SQL) with Multi-AZ deployment for automatic failover.
+- **PITR (Point-In-Time Recovery):** Enable 35-day automated backups to ensure data can be restored to any specific second.
+- **Strict Schema Enforcement:** Use Drizzle ORM with hard Foreign Key constraints and auditing triggers.
 
-1.  **REST (NestJS + Swagger):**
-    - **Purpose:** Primary CRUD for users and media.
-    - **Cost:** Low. Best for standard operations.
-2.  **GraphQL (Apollo/Mercurius):**
-    - **Purpose:** Powering the "Cinematic Media Pages" where nested data (Media -> Cast -> Similar Movies) is needed in one request.
-    - **Cost:** Medium. Prevents over-fetching/under-fetching.
-3.  **WebSockets (Socket.io / WS):**
-    - **Purpose:** Real-time playback synchronization or live community metrics.
-    - **Cost:** Low dev cost if using a managed provider like Pusher or Upstash.
+### II. Resiliency Patterns
+- **Circuit Breakers:** Implement circuit breakers (e.g., using `opossum`) in the NestJS backend to prevent cascading failures when external APIs (TMDB) are down.
+- **Retries with Exponential Backoff:** All client-to-server and server-to-DB calls must use retry logic.
+- **Rate Limiting:** Implement strict rate limiting (Redis-backed) to protect the backend from DoS and noisy neighbors.
 
----
-
-## 3. Multi-Database Architecture
-
-We use a "Polyglot Persistence" model where different databases handle what they do best.
-
-| Database Type | Technology | Purpose | Why? |
-| :--- | :--- | :--- | :--- |
-| **SQL** | PostgreSQL | Source of Truth | Relational integrity for Users, Media, and Watchlists. |
-| **NoSQL** | Redis (Upstash) | Cache & Speed | Store "Trending" and "Featured" lists for sub-millisecond response. |
-| **NoSQL** | MongoDB | Flexible Metadata | Storing raw, unstructured JSON from TMDB imports without schema migrations. |
-| **Graph** | Neo4j (Future) | Recommendations | Mapping relationships between actors and directors for advanced discovery. |
+### III. Observability & Monitoring
+- **Distributed Tracing:** Integrate **OpenTelemetry** + **Jaeger/Honeycomb** to trace requests across the Electron client and NestJS services.
+- **Structured Logging:** Use **Pino** or **Winston** to export JSON logs to a centralized log management system (e.g., Datadog, ELK).
+- **Health Checks:** Implement `/health` and `/ready` endpoints for automated load balancer health management.
 
 ---
 
-## 4. Scaling Strategy
+## 3. Multi-Paradigm Data Layer (High Performance & Scale)
 
-### Vertical Scaling (The "Easy" Way)
-- **Dev Cost:** Zero code changes.
-- **Implementation:** Increase Vercel function memory/timeout limits. Scale up the PostgreSQL instance (CPU/RAM).
-
-### Horizontal Scaling (The "Pro" Way)
-1.  **Serverless Scaling:** Vercel automatically scales horizontally by spawning new instances of your NestJS functions.
-2.  **Database Read Replicas:** Connect the "Media Search" and "Read" endpoints to Postgres Read Replicas to offload the primary DB.
-3.  **Global Edge Caching:** Use Vercel Edge Functions or Cloudflare Workers to cache API responses geographically close to users.
-
----
-
-## 5. Minimum Dev Cost Implementation Path
-
-To keep development fast and cheap while hitting these goals:
-
-1.  **Shared Schema (Drizzle):** Use the unified schema (SQL) for 90% of features.
-2.  **Redis for Performance:** Wrap heavy queries (like `GET /search`) in a simple Redis cache.
-3.  **Managed Infrastructure:**
-    - **Supabase/Vercel Postgres:** No DB maintenance.
-    - **Upstash Redis:** Serverless Redis with zero config.
-    - **Pusher:** For real-time features without managing WebSocket servers.
-4.  **Automatic Import Workers:** Use Vercel Cron jobs to trigger TMDB imports at night, keeping the `media` table fresh without manual work.
+| Layer | Strategy | Purpose |
+| :--- | :--- | :--- |
+| **SQL** | PostgreSQL (RDS/Cloud SQL) | **Source of Truth:** ACiD compliance, synchronous replication, and automated failover for User and Watchlist data. |
+| **Cache (NoSQL)** | Redis Cluster | **Performance:** Multi-node cluster to ensure the cache (Trending/Session data) stays alive even if a node fails. |
+| **Document (NoSQL)** | MongoDB | **Flexibility:** Store raw, unstructured JSON metadata from TMDB/IMDB imports to ensure the import worker never fails due to schema mismatch. |
+| **Graph** | Neo4j | **Discovery:** Map complex relationships between actors, directors, and genres for a high-reliability recommendation engine. |
+| **Object Storage** | AWS S3 / GCS | **Persistence:** Store user-uploaded assets with 99.999999999% durability. |
 
 ---
 
-## 6. Advanced Database Schema (Optimized)
+## 4. API Design Strategy
 
-We extend the Drizzle schema with **Read-optimized Indexes** and a **Watchlist** junction.
+1.  **REST (Primary):** Core CRUD operations and authentication.
+2.  **GraphQL (Aggregator):** Single-endpoint for complex media detail pages (Media + Cast + Recommendations).
+3.  **WebSockets (Real-time):** Real-time playback synchronization and community activity.
+
+---
+
+## 5. Enterprise-Grade Drizzle Schema
+
+We add auditing and strict constraints to the schema to ensure data reliability.
 
 ```ts
-// ... (Previous schema from section 2)
+import {
+  pgTable,
+  serial,
+  integer,
+  varchar,
+  text,
+  timestamp,
+  bigint,
+  check,
+  primaryKey,
+} from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
-// Optimization: Add a GIN Index for full-text search on PostgreSQL
-// This allows high-performance fuzzy searching across 100k+ records
-export const mediaSearchIndex = index('media_search_idx').using(
-  'gin',
-  sql`(to_tsvector('english', title || ' ' || overview))`
-);
+// Audit Mixin for all tables
+const auditColumns = {
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'), // Soft-delete support for data recovery
+};
 
-// Optimization: User-specific Watchlist with unique constraint
-export const watchlist = pgTable('watchlist', {
+export const users = pgTable('users', {
+  id: bigint('id', { mode: 'bigint' }).primaryKey().generatedAlwaysAsIdentity(),
+  email: varchar('email').notNull().unique(),
+  googleId: varchar('google_id').unique(),
+  ...auditColumns,
+}, (table) => [
+  check('email_check', sql`email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'`),
+]);
+
+export const media = pgTable('media', {
   id: serial('id').primaryKey(),
-  userId: bigint('user_id', { mode: 'bigint' }).references(() => users.id),
-  mediaId: integer('media_id').references(() => media.id),
-  addedAt: timestamp('added_at').defaultNow(),
+  tmdbId: integer('tmdb_id').notNull().unique(),
+  title: text('title').notNull(),
+  status: varchar('status', { length: 50 }).default('active'),
+  ...auditColumns,
+});
+
+// Watchlist with strict Foreign Keys and Indexing
+export const watchlist = pgTable('watchlist', {
+  userId: bigint('user_id', { mode: 'bigint' })
+    .notNull()
+    .references(() => users.id, { onDelete: 'restrict' }),
+  mediaId: integer('media_id')
+    .notNull()
+    .references(() => media.id, { onDelete: 'cascade' }),
+  addedAt: timestamp('added_at').defaultNow().notNull(),
 }, (t) => [
-  uniqueIndex('unique_user_media_watchlist').on(t.userId, t.mediaId),
+  primaryKey({ columns: [t.userId, t.mediaId] }),
 ]);
 ```
