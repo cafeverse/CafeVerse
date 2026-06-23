@@ -47,6 +47,16 @@ const Titlebar: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [navigate])
 
+  useEffect(() => {
+    console.log('Titlebar component mounted. window.api status:', {
+      hasApi: !!window.api,
+      hasWindowControls: !!window.api?.windowControls,
+      hasMinimize: !!window.api?.windowControls?.minimize,
+      hasMaximize: !!window.api?.windowControls?.maximize,
+      hasClose: !!window.api?.windowControls?.close
+    })
+  }, [])
+
   return (
     <div className="h-10 w-full flex items-center justify-between bg-card/80 backdrop-blur-xl border-b border-border/40 select-none relative z-50">
       {/* Navigation Controls */}
@@ -93,21 +103,42 @@ const Titlebar: React.FC = () => {
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
         <button
-          onClick={() => window.api?.windowControls?.minimize()}
+          onClick={() => {
+            console.log('Minimize clicked')
+            if (window.api?.windowControls?.minimize) {
+              window.api.windowControls.minimize()
+            } else {
+              console.error('Minimize API missing')
+            }
+          }}
           className="h-full px-4 flex items-center justify-center text-muted-foreground/40 hover:bg-white/5 hover:text-foreground cursor-pointer group"
           title="Minimize"
         >
           <Minus className="size-3.5" />
         </button>
         <button
-          onClick={() => window.api?.windowControls?.maximize()}
+          onClick={() => {
+            console.log('Maximize clicked')
+            if (window.api?.windowControls?.maximize) {
+              window.api.windowControls.maximize()
+            } else {
+              console.error('Maximize API missing')
+            }
+          }}
           className="h-full px-4 flex items-center justify-center text-muted-foreground/40 hover:bg-white/5 hover:text-foreground cursor-pointer group"
           title="Maximize"
         >
           <Square className="size-3" />
         </button>
         <button
-          onClick={() => window.api?.windowControls?.close()}
+          onClick={() => {
+            console.log('Close clicked')
+            if (window.api?.windowControls?.close) {
+              window.api.windowControls.close()
+            } else {
+              console.error('Close API missing')
+            }
+          }}
           className="h-full px-5 flex items-center justify-center text-muted-foreground/40 hover:bg-destructive hover:text-white cursor-pointer group"
           title="Close"
         >

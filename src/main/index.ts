@@ -26,7 +26,7 @@ function createWindow(): void {
     icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: true,
+      sandbox: false,
       contextIsolation: true,
       nodeIntegration: false
     }
@@ -119,20 +119,23 @@ app.whenReady().then(async () => {
   initDiscordRPC()
 
   // Register Window Controls IPC
-  ipcMain.on('window-minimize', () => {
-    mainWindow?.minimize()
+  ipcMain.on('window-minimize', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.minimize()
   })
 
-  ipcMain.on('window-maximize', () => {
-    if (mainWindow?.isMaximized()) {
-      mainWindow?.unmaximize()
+  ipcMain.on('window-maximize', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (win?.isMaximized()) {
+      win?.unmaximize()
     } else {
-      mainWindow?.maximize()
+      win?.maximize()
     }
   })
 
-  ipcMain.on('window-close', () => {
-    mainWindow?.close()
+  ipcMain.on('window-close', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.close()
   })
 
   ipcMain.handle('get-app-version', () => app.getVersion())
