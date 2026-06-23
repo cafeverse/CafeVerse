@@ -375,9 +375,7 @@ export default function AnimePage(): React.JSX.Element {
             setSelectedGenres([])
           } else {
             setSelectedGenres((prev) =>
-              prev.includes(genreName)
-                ? prev.filter((g) => g !== genreName)
-                : [...prev, genreName]
+              prev.includes(genreName) ? prev.filter((g) => g !== genreName) : [...prev, genreName]
             )
           }
           setCurrentPage(1)

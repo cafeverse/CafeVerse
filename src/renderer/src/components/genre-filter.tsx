@@ -132,7 +132,9 @@ export default function GenreFilter({
       <section className="px-6 pt-6 pb-3 flex items-center justify-between">
         <h2 className="text-sm font-black tracking-tight text-white flex items-center gap-2">
           <Sparkles className="size-4 text-primary" />
-          {selectedGenres.length > 0 ? `${selectedGenres.join(' + ')} ${contentLabel}` : `All ${contentLabel}`}
+          {selectedGenres.length > 0
+            ? `${selectedGenres.join(' + ')} ${contentLabel}`
+            : `All ${contentLabel}`}
           {totalItems != null && (
             <span className="text-[10px] text-muted-foreground/40 font-bold ml-1">
               ({totalItems.toLocaleString()})

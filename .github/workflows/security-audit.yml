@@ -1,10 +1,10 @@
-name: "Security Audit"
+name: 'Security Audit'
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ['main']
   pull_request:
-    branches: [ "main" ]
+    branches: ['main']
   workflow_call:
 
 jobs:
@@ -16,15 +16,15 @@ jobs:
       contents: read
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      with:
-        fetch-depth: 0
-        persist-credentials: false
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
-    - name: TruffleHog OSS
-      uses: trufflesecurity/trufflehog@30d5bb91af1a771378349dbbb0c82129392acf70 # v3.95.6
-      with:
-        path: ./
-        base: ${{ github.event.pull_request.base.sha || github.event.before || 'HEAD~1' }}
-        head: HEAD
+      - name: TruffleHog OSS
+        uses: trufflesecurity/trufflehog@30d5bb91af1a771378349dbbb0c82129392acf70 # v3.95.6
+        with:
+          path: ./
+          base: ${{ github.event.pull_request.base.sha || github.event.before || 'HEAD~1' }}
+          head: HEAD
