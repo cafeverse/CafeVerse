@@ -35,7 +35,7 @@
     "dotenv": "^17.4.2",
     "electron-updater": "^6.8.9",
     "express": "^5.2.1",
-    "lucide-react": "^1.16.0",
+    "lucide-react": "^1.21.0",
     "radix-ui": "^1.6.0",
     "react-router-dom": "^7.15.1",
     "shadcn": "^4.11.0",
