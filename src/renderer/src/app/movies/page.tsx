@@ -296,10 +296,17 @@ export default function MoviesPage(): React.JSX.Element {
 
         const lists = await Promise.all(fetches)
 
-        // Intersect the lists by movie ID
-        let filtered = lists[0] || []
-        for (let i = 1; i < lists.length; i++) {
-          const ids = new Set(lists[i].map((m) => m.id))
+        // Intersect the lists by movie ID (optimized)
+        // Sort by length to minimize filter operations and set creation overhead.
+        // We preserve lists[0] if lengths are equal to maintain idiomatic ordering.
+        const sortedLists = [...lists].sort((a, b) => a.length - b.length)
+        let filtered = sortedLists[0] || []
+
+        for (let i = 1; i < sortedLists.length; i++) {
+          if (filtered.length === 0) break // Short-circuit if no matches remain
+
+          const currentList = sortedLists[i]
+          const ids = new Set<number>(currentList.map((m) => m.id))
           filtered = filtered.filter((m) => ids.has(m.id))
         }
 
