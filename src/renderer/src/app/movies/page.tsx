@@ -278,12 +278,16 @@ export default function MoviesPage(): React.JSX.Element {
       setLoadingMovies(true)
       setMoviesError(null)
     })
+
+    // Create a lookup map for faster genre object retrieval
+    const genreMap = new Map(genres.map((g) => [g.name, g]))
+
     try {
       if (selectedGenres.length > 1) {
         // Multi-genre filtering fallback: fetch all movies for each selected genre in parallel,
         // then intersect them to find matches belonging to all selected genres.
         const fetches = selectedGenres.map(async (genreName) => {
-          const genreObj = genres.find((g) => g.name === genreName)
+          const genreObj = genreMap.get(genreName)
           const params = new URLSearchParams({
             limit: '1000',
             sortBy: sortOption.key,
@@ -326,7 +330,7 @@ export default function MoviesPage(): React.JSX.Element {
           sortOrder: sortOption.order
         })
         if (selectedGenres.length === 1) {
-          const genreObj = genres.find((g) => g.name === selectedGenres[0])
+          const genreObj = genreMap.get(selectedGenres[0])
           if (genreObj) params.append('genreId', String(genreObj.id))
         }
         const data = await fetchApi(`/movies?${params}`)
