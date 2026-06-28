@@ -296,11 +296,23 @@ export default function MoviesPage(): React.JSX.Element {
 
         const lists = await Promise.all(fetches)
 
-        // Intersect the lists by movie ID
-        let filtered = lists[0] || []
-        for (let i = 1; i < lists.length; i++) {
-          const ids = new Set(lists[i].map((m) => m.id))
-          filtered = filtered.filter((m) => ids.has(m.id))
+        // Intersect the lists by movie ID (optimized: preserve order of first list, O(1) lookups)
+        let filtered: MediaItem[] = []
+        if (lists.length > 0) {
+          filtered = lists[0] || []
+          for (let i = 1; i < lists.length; i++) {
+            const currentList = lists[i]
+            if (currentList.length === 0) {
+              filtered = []
+              break
+            }
+            const ids = new Set()
+            for (let j = 0; j < currentList.length; j++) {
+              ids.add(currentList[j].id)
+            }
+            filtered = filtered.filter((m) => ids.has(m.id))
+            if (filtered.length === 0) break
+          }
         }
 
         // Paginate locally
