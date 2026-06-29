@@ -279,6 +279,10 @@ export default function MoviesPage(): React.JSX.Element {
       setLoadingMovies(true)
       setMoviesError(null)
     })
+
+    // Create a lookup map for faster genre object retrieval
+    const genreMap = new Map(genres.map((g) => [g.name, g]))
+
     try {
       if (selectedGenres.length > 1) {
         // Multi-genre filtering fallback: fetch all movies for each selected genre in parallel,
