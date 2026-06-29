@@ -292,7 +292,12 @@ export default function TvShowsPage(): React.JSX.Element {
         // Intersect the lists by show ID
         let filtered = lists[0] || []
         for (let i = 1; i < lists.length; i++) {
-          const ids = new Set(lists[i].map((m) => m.id))
+          if (filtered.length === 0) break
+          const currentList = lists[i]
+          const ids = new Set<number>()
+          for (let j = 0; j < currentList.length; j++) {
+            ids.add(currentList[j].id)
+          }
           filtered = filtered.filter((m) => ids.has(m.id))
         }
 
@@ -333,7 +338,7 @@ export default function TvShowsPage(): React.JSX.Element {
     } finally {
       setLoadingShows(false)
     }
-  }, [currentPage, sortOption, selectedGenres, genres, fetchApi])
+  }, [currentPage, sortOption, selectedGenres, genreMap, fetchApi])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

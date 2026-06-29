@@ -279,10 +279,6 @@ export default function MoviesPage(): React.JSX.Element {
       setLoadingMovies(true)
       setMoviesError(null)
     })
-
-    // Create a lookup map for faster genre object retrieval
-    const genreMap = new Map(genres.map((g) => [g.name, g]))
-
     try {
       if (selectedGenres.length > 1) {
         // Multi-genre filtering fallback: fetch all movies for each selected genre in parallel,
@@ -311,7 +307,10 @@ export default function MoviesPage(): React.JSX.Element {
           if (filtered.length === 0) break // Short-circuit if no matches remain
 
           const currentList = sortedLists[i]
-          const ids = new Set<number>(currentList.map((m) => m.id))
+          const ids = new Set<number>()
+          for (let j = 0; j < currentList.length; j++) {
+            ids.add(currentList[j].id)
+          }
           filtered = filtered.filter((m) => ids.has(m.id))
         }
 
@@ -352,7 +351,7 @@ export default function MoviesPage(): React.JSX.Element {
     } finally {
       setLoadingMovies(false)
     }
-  }, [currentPage, sortOption, selectedGenres, genres, fetchApi])
+  }, [currentPage, sortOption, selectedGenres, genreMap, fetchApi])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

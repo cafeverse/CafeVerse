@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useOutletContext, useNavigate } from 'react-router-dom'
 import {
   Tv,
@@ -282,8 +282,6 @@ export default function AnimePage(): React.JSX.Element {
     }
   }, [featured])
 
-  const genreMap = useMemo(() => new Map(genres.map((g) => [g.name, g])), [genres])
-
   const loadShows = useCallback(async () => {
     Promise.resolve().then(() => {
       setLoadingShows(true)
@@ -310,7 +308,12 @@ export default function AnimePage(): React.JSX.Element {
         // Intersect the lists by anime ID
         let filtered = lists[0] || []
         for (let i = 1; i < lists.length; i++) {
-          const ids = new Set(lists[i].map((m) => m.id))
+          if (filtered.length === 0) break
+          const currentList = lists[i]
+          const ids = new Set<number>()
+          for (let j = 0; j < currentList.length; j++) {
+            ids.add(currentList[j].id)
+          }
           filtered = filtered.filter((m) => ids.has(m.id))
         }
 
