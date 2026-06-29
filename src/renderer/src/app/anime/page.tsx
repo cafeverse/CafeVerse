@@ -183,6 +183,7 @@ export default function AnimePage(): React.JSX.Element {
 
   // ── Genres ────────────────────────────────────────────────────────────────
   const [genres, setGenres] = useState<{ id: number; name: string }[]>([])
+  const genreMap = React.useMemo(() => new Map(genres.map((g) => [g.name, g])), [genres])
   const [selectedGenres, setSelectedGenres] = useState<string[]>([])
 
   // ── Catalogue ─────────────────────────────────────────────────────────────
